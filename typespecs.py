@@ -27,22 +27,21 @@ class CategorySpec:
     def __init__(self, *args, databasis, **kwargs): 
         self.__categories = set(_aslist(databasis))    
         super().__init__(*args, **kwargs)
-    
-    def fixvalue(self, value): return set([item for item in _aslist(value) if item in self.__categories]) 
-    
+
     def checkstr(self, string): 
         if not bool(string): raise SpecStringError(self, string)
-    def checkval(self, value): 
-        if not isinstance(value, set): raise SpecValueError(self, value)
-        if not all([item in self.__categories for item in value]): raise SpecValueError(self, value)
+    def checkval(self, value):  
+        if not isinstance(value, set): raise SpecValueError(self, _aslist(value))
+        if not all([item in self.__categories for item in value]): raise SpecValueError(self, _aslist(value))
     
     def asstr(self, value): return self.delimiter.join(value)
     def asval(self, string): return set(string.split(self.delimiter))
 
     def __eq__(self, other): return self.categories == other.categories
     def todict(self): return dict(data=self.data, datatype=self.datatype, databasis=self.categories)
+    
 
-
+        
 
 
 
