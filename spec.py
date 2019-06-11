@@ -69,6 +69,7 @@ class Spec(ABC):
     @property
     def name(self): return '_'.join([uppercase(self.data, index=0, withops=True), self.__class__.__name__])
     def __init__(self, *args, data, **kwargs): self.__data = data
+    def jsonstr(cls): return json.dumps(cls.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
 
     # ABSTRACT INSTANCE METHODS    
     @abstractmethod
@@ -80,9 +81,9 @@ class Spec(ABC):
     @abstractmethod
     def checkval(value): pass
     @abstractmethod
-    def __eq__(self, other): pass
-    @abstractmethod
     def todict(self): pass
+    @abstractmethod
+    def __eq__(self, other): pass
 
     # REGISTER SUBCLASSES  
     __subclasses = {}      
