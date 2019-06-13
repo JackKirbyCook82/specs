@@ -68,9 +68,10 @@ class Spec(ABC):
     def data(self): return self.__data
     @property
     def name(self): return '_'.join([uppercase(self.data, index=0, withops=True), self.__class__.__name__])
+    @property
+    def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
     def __init__(self, *args, data, **kwargs): self.__data = data
-    def jsonstr(cls): return json.dumps(cls.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
-
+    
     # ABSTRACT INSTANCE METHODS    
     @abstractmethod
     def asstr(value): pass
