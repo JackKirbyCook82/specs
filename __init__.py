@@ -38,12 +38,12 @@ _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else lis
 _allnull = lambda items: all([pd.isnull(item) for item in items])
 
 def parser(item, splitby): 
-    if pd.notnull(item): return item.split(splitby) if splitby in item else str(item)
-    else: return item
+    if _allnull(_aslist(item)): return ''
+    else: return item.split(splitby) if splitby in item else str(item)
     
 def antiparser(item, concatby): 
-    if pd.notnull(item): return concatby.join([str(i) for i in item]) if isinstance(item, (set, tuple, list)) else str(item)
-    else: return ''
+    if _allnull(_aslist(item)): return ''
+    else: return concatby.join([str(i) for i in item]) if isinstance(item, (set, tuple, list)) else str(item)
 
 
 def specs_fromfile(file, splitchar=';'):
