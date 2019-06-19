@@ -10,7 +10,7 @@ import re
 
 from utilities.quantities import Multiplier, Unit
 
-from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
+from specs.spec import Spec, samespec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -19,12 +19,11 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-SCALES = {'normalize'   : {'data': 'quantiles', 'multiplier': Multiplier('%'), 'unit': Unit(),    'numformat': '{:.2f}', 'numstring': '{value}{multiplier} {unit}'},
-          'standardize' : {'data': 'zscores',   'multiplier': Multiplier(),    'unit': Unit('σ'), 'numformat': '{:.2f}', 'numstring': '{value}{multiplier} {unit}'},
-          'minmax'      : {'data': 'minmax',    'multiplier': Multiplier('%'), 'unit': Unit(),    'numformat': '{:.2f}', 'numstring': '{value}{multiplier} {unit}'}}
-
-CONSOLIDATIONS = {'average'  : lambda kwargs: '{:.0f}%wt|avg'.format(kwargs['wieght'] * 100), 
-                  'cumulate' : lambda kwargs: '|'.join([kwargs['direction'], 'cum'])}
+normalize_data = lambda data: '_'.join(['quantiles', data])
+standardize_data = lambda data: '_'.join(['zscores', data])
+minmax_data = lambda data: '_'.join(['minmax', data])
+average_data = lambda weight, data: '{:.0f}%wt|avg_{}'.format(weight * 100, data) 
+cumulate_data = lambda direction, data: '{}|cum_{}'.format(direction, data)
 
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
@@ -77,8 +76,14 @@ class NumSpec:
     def __eq__(self, other): return self.unit == other.unit
     def todict(self): return dict(data=self.data, datatype=self.datatype, multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring)
 
+    # OPERATIONS
+    @samespec
+    def add(self, other, *args, **kwargs): return self
+    @samespec
+    def substract(self, other, *args, **kwargs): return self
+
     def multiply(self, other, *args, **kwargs): 
-        if type(other) != NumSpec: raise TypeError(' != '.join([self.name, other.name]))
+        if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply')
         data = kwargs.get('data', '*'.join([self.data, other.data]))  
         unit = self.unit * other.unit
         multiplier = self.multiplier * other.multiplier  
@@ -87,7 +92,7 @@ class NumSpec:
         return self.__class__(data=data, multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring)
         
     def divide(self, other, *args, **kwargs): 
-        if type(other) != NumSpec: raise TypeError(' != '.join([self.name, other.name]))
+        if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply')
         data = kwargs.get('data', '/'.join([self.data, other.data]))  
         unit = self.unit / other.unit
         multiplier = self.multiplier / other.multiplier        
@@ -95,11 +100,10 @@ class NumSpec:
         numstring = kwargs.get('numstring', self.numstring) 
         return self.__class__(data=data, multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring)
 
-    def scale(self, method, *args, **kwargs):
-        data = '_'.join([CONSOLIDATIONS[method](kwargs), self.data])
-        attrs = self.todict()
-        attrs.update({'data' : data})
-        return self.__class__(**attrs)        
+    # TRANSFORMATIONS
+    def normalize(self, *args, **kwargs): return self.__class__(data=normalize_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
+    def standardize(self, *args, **kwargs): return self.__class__(data=standardize_data(self.data), multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
+    def minmax(self, *args, **kwargs): return self.__class__(data=minmax_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
 
    
 @NumSpec.register('range')
@@ -134,19 +138,20 @@ class RangeSpec:
         elif lower == upper: return 'state'
         else: return 'center' 
 
-    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, 'multiply')
-    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, 'divide')
-        
-    def consolidate(self, method, *args, **kwargs):
-        data = '_'.join([CONSOLIDATIONS[method](kwargs), self.data])
-        attrs = self.todict()
-        attrs.update({'data' : data, 'datatype' : 'range'})
+    # OPERATIONS
+    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'multiply')
+    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
+    
+    # TRANSFORMATIONS
+    def average(self, *args, weight=0.5, **kwargs):
+        attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
+        attrs['data'] = kwargs.get('data', average_data(weight, self.data))
         return NumSpec(**attrs)
-
-
-
-
-
+    
+    def cumulate(self, *args, direction, **kwargs):
+        attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
+        attrs['data'] = kwargs.get('data', cumulate_data(direction, self.data))
+        return NumSpec(**attrs)
 
 
 

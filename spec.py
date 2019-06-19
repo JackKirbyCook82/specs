@@ -8,13 +8,14 @@ Created on Fri Apr 12 2018
 
 import os.path
 from abc import ABC, abstractmethod
+from functools import update_wrapper
 import json
 
 from utilities.strings import uppercase
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['Spec', 'SpecStringError', 'SpecValueError', 'SpecOperationError', 'asstr', 'asval']
+__all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError', 'asstr', 'asval']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
@@ -35,12 +36,12 @@ def asval(function):
         return value
     return wrapper
 
-
-def sametype(function):
+def samespec(function):
     def wrapper(self, other, *args, **kwargs):
-        if type(self) != type(other): raise TypeError(' != '.join([str(type(self)), str(type(other))]))
-        if self.data != other.data: raise TypeError(' != '.join([self.name, other.name]))
-        return function(self, other, *args, **kwargs)
+        if type(self) != type(other): raise SpecOperationNotSupportedError(self, other, function.__name__)
+        if self.data != other.data: raise SpecOperationNotSupportedError(self, other, function.__name__)
+        return function(self, other, *args, **kwargs)    
+    update_wrapper(wrapper, function)
     return wrapper
 
 
@@ -48,20 +49,20 @@ class SpecStringError(Exception):
     def __init__(self, spec, string): super().__init__('{}({})'.format(spec.__class__.__name__, string))
 class SpecValueError(Exception): 
     def __init__(self, spec, value): super().__init__('{}({})'.format(spec.__class__.__name__, value))
-class SpecOperationError(Exception): 
-    def __init__(self, spec, other, operation): super().__init__('{}.{}({})'.format(repr(spec), operation, repr(other)))
+
 class SpecOperationNotSupportedError(Exception): 
-    def __init__(self, spec, operation): super().__init__('{}.{}()'.format(repr(spec), operation))
-
-
+    def __init__(self, spec, other, operation): super().__init__('{}.{}({})'.format(repr(spec), operation, repr(other)))
+class SpecTransformationNotSupportedError(Exception):
+    def __init__(self, spec, transformation, method): super().__init__('{}.{}(method={})'.format(repr(spec), transformation, method))   
+       
+    
 class Spec(ABC):
     def __new__(cls, *args, **kwargs):
         if cls == Spec: return cls.subclasses()[kwargs['datatype']](*args, **kwargs)
         else:
             assert hasattr(cls, 'datatype')
             cls.asstr, cls.asval = asstr(cls.asstr), asval(cls.asval)
-            cls.__eq__ = sametype(cls.__eq__)
-            cls.add, cls.subtract = sametype(cls.add), sametype(cls.subtract)
+            cls.__eq__ = samespec(cls.__eq__)
             return super().__new__(cls)
 
     @property
@@ -71,6 +72,11 @@ class Spec(ABC):
     @property
     def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
     def __init__(self, *args, data, **kwargs): self.__data = data
+    
+    def __add__(self, other): return self.add(other)
+    def __sub__(self, other): return self.subtract(other)
+    def __mul__(self, other): return self.multiply(other)
+    def __truediv__(self, other): return self.divide(other)    
     
     # ABSTRACT INSTANCE METHODS    
     @abstractmethod
@@ -102,24 +108,14 @@ class Spec(ABC):
         return wrapper  
 
     # EQUALITY
+    @samespec
     def __ne__(self, other): return not self.__eq__(other)
 
     # OPERATIONS
-    def __add__(self, other): return self.add(other)
-    def __sub__(self, other): return self.subtract(other)
-    def __mul__(self, other): return self.multiply(other)
-    def __truediv__(self, other): return self.divide(other)
-    
-    def add(self, other, *args, **kwargs): 
-        if self != other: raise SpecOperationError(self, other, 'add')
-        return self
-        
-    def subtract(self, other, *args, **kwargs): 
-        if self != other: raise SpecOperationError(self, other, 'subtract')
-        return self
-    
-    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, 'multiply')
-    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, 'divide')
+    def add(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'add')  
+    def subtract(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'subtract')
+    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'multiply')
+    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
     
     # FILES
     def tojson(self, file):
