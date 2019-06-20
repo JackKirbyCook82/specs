@@ -80,7 +80,7 @@ class NumSpec:
     @samespec
     def add(self, other, *args, **kwargs): return self
     @samespec
-    def substract(self, other, *args, **kwargs): return self
+    def subtract(self, other, *args, **kwargs): return self
 
     def multiply(self, other, *args, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply')
