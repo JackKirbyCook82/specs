@@ -68,7 +68,7 @@ class Spec(ABC):
     @property
     def data(self): return self.__data
     @property
-    def name(self): return '_'.join([uppercase(self.data, index=0, withops=True), self.__class__.__name__])
+    def name(self): return '_'.join([uppercase(self.data, index=0, withops=True), self.__class__.__name__, 'Spec'])
     @property
     def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
     def __init__(self, *args, data, **kwargs): self.__data = data
@@ -117,6 +117,12 @@ class Spec(ABC):
     def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'multiply')
     def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
     
+    # TRANSFORMATIONS
+    def modify(self, *args, mod, **kwargs):
+        attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
+        attrs['data'] = kwargs.get('data', '_'.join([mod, self.data]))
+        return self.__class__(**attrs)
+        
     # FILES
     def tojson(self, file):
         with open(file, 'w') as outfile:          
