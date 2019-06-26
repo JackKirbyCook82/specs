@@ -73,6 +73,7 @@ class NumSpec:
         assert isinstance(nums[0], (int, float))
         return nums[0] * self.multiplier.num
     
+    @samespec
     def __eq__(self, other): return self.unit == other.unit
     def todict(self): return dict(data=self.data, datatype=self.datatype, multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring)
 
@@ -101,9 +102,9 @@ class NumSpec:
         return self.__class__(data=data, multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring)
 
     # TRANSFORMATIONS
-    def normalize(self, *args, **kwargs): return self.__class__(data=normalize_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
-    def standardize(self, *args, **kwargs): return self.__class__(data=standardize_data(self.data), multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
-    def minmax(self, *args, **kwargs): return self.__class__(data=minmax_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{value}{multiplier} {unit}')
+    def normalize(self, *args, **kwargs): return self.__class__(data=normalize_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{num}{multi}{unit}')
+    def standardize(self, *args, **kwargs): return self.__class__(data=standardize_data(self.data), multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{num}{multi}{unit}')
+    def minmax(self, *args, **kwargs): return self.__class__(data=minmax_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{num}{multi}{unit}')
 
    
 @NumSpec.register('range')

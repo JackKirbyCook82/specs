@@ -15,26 +15,10 @@ from utilities.strings import uppercase
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError', 'asstr', 'asval']
+__all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
-
-def asstr(function):
-    def wrapper(self, value):
-        self.checkval(value)
-        string = function(self, value)
-        self.checkstr(string)
-        return string
-    return wrapper
-
-def asval(function):
-    def wrapper(self, string):
-        self.checkstr(string)
-        value = function(self, string)
-        self.checkval(value)
-        return value
-    return wrapper
 
 def samespec(function):
     def wrapper(self, other, *args, **kwargs):
@@ -61,8 +45,6 @@ class Spec(ABC):
         if cls == Spec: return cls.subclasses()[kwargs['datatype']](*args, **kwargs)
         else:
             assert hasattr(cls, 'datatype')
-            cls.asstr, cls.asval = asstr(cls.asstr), asval(cls.asval)
-            cls.__eq__ = samespec(cls.__eq__)
             return super().__new__(cls)
 
     @property
@@ -118,9 +100,9 @@ class Spec(ABC):
     def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
     
     # TRANSFORMATIONS
-    def modify(self, *args, mod, **kwargs):
+    def modify(self, *args, data, **kwargs):
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = kwargs.get('data', '_'.join([mod, self.data]))
+        attrs['data'] = '_'.join([data, self.data])
         return self.__class__(**attrs)
         
     # FILES

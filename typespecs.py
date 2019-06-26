@@ -36,6 +36,7 @@ class CategorySpec:
     def asstr(self, value): return self.delimiter.join(value)
     def asval(self, string): return string.split(self.delimiter)
 
+    @samespec
     def __eq__(self, other): return self.categories == other.categories
     
     def todict(self): return dict(data=self.data, datatype=self.datatype, databasis=self.categories)
