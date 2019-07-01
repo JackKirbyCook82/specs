@@ -100,7 +100,7 @@ class Spec(ABC):
     def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
     
     # TRANSFORMATIONS
-    def modify(self, *args, data, **kwargs):
+    def modify(self, data, *args, **kwargs):
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
         attrs['data'] = '_'.join([data, self.data])
         return self.__class__(**attrs)

@@ -7,6 +7,7 @@ Created on Fri Apr 12 2018
 """
 
 import re
+from numbers import Number
 
 from utilities.quantities import Multiplier, Unit
 
@@ -19,11 +20,12 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-normalize_data = lambda data: '_'.join(['quantiles', data])
-standardize_data = lambda data: '_'.join(['zscores', data])
-minmax_data = lambda data: '_'.join(['minmax', data])
-average_data = lambda weight, data: '{:.0f}%wt|avg_{}'.format(weight * 100, data) 
-cumulate_data = lambda direction, data: '{}|cum_{}'.format(direction, data)
+normalize_data = lambda data: '({})'.format('_'.join(['quantiles', data]))
+standardize_data = lambda data: '({})'.format('_'.join(['zscores', data]))
+minmax_data = lambda data: '({})'.format('_'.join(['minmax', data]))
+average_data = lambda weight, data: '({})'.format('{:.0f}%wt|avg_{}'.format(weight * 100, data))
+cumulate_data = lambda direction, data: '({})'.format('{}|cum_{}'.format(direction, data))
+group_data = lambda data: '({})'.format('_'.join(['bins', data]))
 
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
@@ -63,14 +65,14 @@ class NumSpec:
     def checkstr(self, string):
         if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1: raise SpecStringError(self, string)
     def checkval(self, value): 
-        if not isinstance(value, (int, float)): raise SpecValueError(self, value)
+        if not isinstance(value, Number): raise SpecValueError(self, value)
     
     def asstr(self, value): 
         return self.numstr(value)     
     def asval(self, string): 
         nums = [num for num in _numfromstr(string)]
         assert len(nums) == 1
-        assert isinstance(nums[0], (int, float))
+        assert isinstance(nums[0], Number)
         return nums[0] * self.multiplier.num
     
     @samespec
@@ -106,6 +108,11 @@ class NumSpec:
     def standardize(self, *args, **kwargs): return self.__class__(data=standardize_data(self.data), multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{num}{multi}{unit}')
     def minmax(self, *args, **kwargs): return self.__class__(data=minmax_data(self.data), multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{num}{multi}{unit}')
 
+    def group(self, *args, **kwargs): 
+        attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
+        attrs['data'] = kwargs.get('data', group_data(self.data))
+        return RangeSpec(**attrs)
+
    
 @NumSpec.register('range')
 class RangeSpec:
@@ -117,7 +124,7 @@ class RangeSpec:
     def checkval(self, value): 
         if not isinstance(value, list): raise SpecValueError(self, value)
         if not len(value) == 2: raise SpecValueError(self, value)
-        if not all([isinstance(num, (int, float, type(None))) for num in value]): raise SpecValueError(self, value) 
+        if not all([isinstance(num, (Number, type(None))) for num in value]): raise SpecValueError(self, value) 
     
     def asstr(self, value): 
         return self.headings[self.direction(value)] + self.delimiter.join([self.numstr(num) for num in value if num is not None])   
@@ -138,10 +145,6 @@ class RangeSpec:
         elif upper is None: return 'upper'
         elif lower == upper: return 'state'
         else: return 'center' 
-
-    # OPERATIONS
-    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'multiply')
-    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
     
     # TRANSFORMATIONS
     def average(self, *args, weight=0.5, **kwargs):
