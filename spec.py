@@ -13,11 +13,26 @@ import json
 
 from utilities.strings import uppercase
 
+from specs.data import DataManipulation
+
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
 __all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
+
+
+datatransformations = DataManipulation('{axis}|{data}')
+datatransformations['normalize'] = '({axis}|quantiles_{data})'
+datatransformations['standardize'] = '({axis}|zscores_{data})'
+datatransformations['minmax'] = '({axis}|minmax_{data})'
+datatransformations['average'] = '({weight}|avg_{data})'
+datatransformations['cumulate'] = '({direction}|cum_{data})'
+datatransformations['group'] = '({data}|bins)'
+
+dataoperations = DataManipulation('{data}')
+dataoperations['multiply'] = '({data}*{other})'
+dataoperations['divide'] = '({data}/{other})'
 
 
 def samespec(function):
@@ -94,16 +109,18 @@ class Spec(ABC):
     def __ne__(self, other): return not self.__eq__(other)
 
     # OPERATIONS
-    def add(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'add')  
-    def subtract(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'subtract')
-    def multiply(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'multiply')
-    def divide(self, other, *args, **kwargs): raise SpecOperationNotSupportedError(self, other, 'divide')
+    def operation(self, other, *args, method, **kwargs):
+        datatype = kwargs.get('datatype', self.datatype)
+        attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
+        attrs['data'] = dataoperations[method](data=self.data, other=other.data, method=method, **kwargs)
+        return self.subclasses()[datatype](**attrs)        
     
     # TRANSFORMATIONS
-    def modify(self, data, *args, **kwargs):
+    def transformation(self, *args, method, **kwargs):
+        datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = '_'.join([data, self.data])
-        return self.__class__(**attrs)
+        attrs['data'] = datatransformations[method](data=self.data, method=method, **kwargs)
+        return self.subclasses()[datatype](**attrs)
         
     # FILES
     def tojson(self, file):

@@ -37,19 +37,16 @@ class CategorySpec:
     def asval(self, string): return string.split(self.delimiter)
 
     @samespec
-    def __eq__(self, other): return self.categories == other.categories
+    def __eq__(self, other): return self.categories == other.categories    
     
     def todict(self): return dict(data=self.data, datatype=self.datatype, databasis=self.categories)
     
     # OPERATIONS
     @samespec
-    def add(self, other, *args, **kwargs): return self
+    def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
     @samespec
-    def subtract(self, other, *args, **kwargs): return self
-        
-
-
-
+    def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
+    
 
 
 
