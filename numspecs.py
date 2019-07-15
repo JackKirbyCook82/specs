@@ -113,8 +113,10 @@ class RangeSpec:
         if not len(value) == 2: raise SpecValueError(self, value)
         if not all([isinstance(num, (Number, type(None))) for num in value]): raise SpecValueError(self, value) 
     
-    def asstr(self, value): 
-        return self.headings[self.direction(value)] + self.delimiter.join([self.numstr(num) for num in value if num is not None])   
+    def asstr(self, value):    
+        if self.direction(value) == 'state': rangestr = self.numstr(value[0])
+        else: rangestr = self.delimiter.join([self.numstr(num) for num in value if num is not None])          
+        return self.headings[self.direction(value)] + rangestr
     def asval(self, string):
         nums = [num for num in _numfromstr(string)]
         if self.headings['upper'] in string: nums = [*nums, None]

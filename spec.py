@@ -22,7 +22,7 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-datatransformations = DataManipulation('{axis}|{data}')
+datatransformations = DataManipulation('{data}')
 datatransformations['normalize'] = '({axis}|quantiles_{data})'
 datatransformations['standardize'] = '({axis}|zscores_{data})'
 datatransformations['minmax'] = '({axis}|minmax_{data})'
