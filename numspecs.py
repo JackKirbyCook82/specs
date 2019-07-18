@@ -33,6 +33,8 @@ def _numfromstr(numstr):
 
 @Spec.register('num')
 class NumSpec:  
+    numdirections = {'upper':"▲", 'lower':"▼", 'state':"", 'average':'~'}
+    
     @property
     def multiplier(self): return self.__multiplier
     @property
@@ -41,18 +43,22 @@ class NumSpec:
     def numformat(self): return self.__numformat
     @property
     def numstring(self): return self.__numstring
+    @property
+    def numdirection(self): return self.__numdirection
     
     @classmethod
     def setnumformat(self, numformat): self.__numformat = numformat
     
-    def __init__(self, *args, multiplier='', unit='', numformat='{:.0f}', numstring='{num}{multi} {unit}', **kwargs): 
+    def __init__(self, *args, multiplier='', unit='', numformat='{:.0f}', numstring='{drt}{num}{multi} {unit}', numdirection='state', **kwargs): 
+        assert numdirection in self.numdirections.keys()
         self.__multiplier =  multiplier if isinstance(multiplier, Multiplier) else Multiplier.fromstr(str(multiplier)) 
         self.__unit = unit if isinstance(unit, Unit) else Unit.fromstr(str(unit))     
         self.__numformat, self.__numstring = numformat, numstring
+        self.__numdirection = numdirection
         super().__init__(*args, **kwargs)
         
     def valuestr(self, value): return self.numformat.format(value / self.multiplier.num)
-    def numstr(self, value): return self.numstring.format(num=self.valuestr(value), multi=str(self.multiplier), unit=str(self.unit))   
+    def numstr(self, value): return self.numstring.format(num=self.valuestr(value), multi=str(self.multiplier), unit=str(self.unit), drt=self.numdirections[self.numdirection])   
         
     def checkstr(self, string):
         if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1: raise SpecStringError(self, string)
@@ -69,7 +75,7 @@ class NumSpec:
     
     @samespec
     def __eq__(self, other): return self.unit == other.unit
-    def todict(self): return dict(data=self.data, datatype=self.datatype, multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring)
+    def todict(self): return dict(data=self.data, datatype=self.datatype, multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring, numdirection=self.numdirection)
 
     # OPERATIONS
     @samespec
@@ -95,16 +101,28 @@ class NumSpec:
 
     # TRANSFORMATIONS
     def scale(self, *args, method, axis, **kwargs): return getattr(self, method)(*args, method=method, axis=axis, **kwargs)
-    def normalize(self, *args, axis, **kwargs): return self.transformation(*args, method='normalize', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{num}{multi}{unit}', **kwargs)
-    def standardize(self, *args, axis, **kwargs): return self.transformation(*args, method='standardize', axis=axis, multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{num}{multi}{unit}', **kwargs)
-    def minmax(self, *args, axis, **kwargs): return self.transformation(*args, method='minmax', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{num}{multi}{unit}', **kwargs)
+    def normalize(self, *args, axis, **kwargs): return self.transformation(*args, method='normalize', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    def standardize(self, *args, axis, **kwargs): return self.transformation(*args, method='standardize', axis=axis, multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    def minmax(self, *args, axis, **kwargs): return self.transformation(*args, method='minmax', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
     def group(self, *args, **kwargs): return self.transformation(*args, method='group', datatype='range', **kwargs)
+    def cumulate(self, *args, direction, **kwargs): 
+        assert direction == 'lower' or direction == 'upper'
+        return self.transformation(*args, method='cumulate', direction=direction, numdirection=direction, **kwargs)
 
    
 @NumSpec.register('range')
 class RangeSpec:
     delimiter = ' - '
-    headings = {'upper':'>', 'lower':'<', 'center':'', 'state':'', 'unbounded':'...'} 
+    directions = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':'...', 'center':''}
+
+    def direction(self, value):
+        self.checkval(value)
+        lower, upper = value
+        if all([x is None for x in value]): return 'unbounded'
+        elif lower is None: return 'lower'
+        elif upper is None: return 'upper'
+        elif lower == upper: return 'state'
+        else: return 'center' 
 
     def checkstr(self, string): 
         if not bool(string): raise SpecStringError(self, string)
@@ -116,34 +134,25 @@ class RangeSpec:
     def asstr(self, value):    
         if self.direction(value) == 'state': rangestr = self.numstr(value[0])
         else: rangestr = self.delimiter.join([self.numstr(num) for num in value if num is not None])          
-        return self.headings[self.direction(value)] + rangestr
+        return self.directions[self.direction(value)] + rangestr
     def asval(self, string):
         nums = [num for num in _numfromstr(string)]
-        if self.headings['upper'] in string: nums = [*nums, None]
-        elif self.headings['lower'] in string: nums = [None, *nums]
-        elif self.headings['unbounded'] in string: nums = [None, None]
+        if self.directions['upper'] in string: nums = [*nums, None]
+        elif self.directions['lower'] in string: nums = [None, *nums]
+        elif self.directions['unbounded'] in string: nums = [None, None]
         if len(nums) == 1: nums = [*nums, *nums]
         assert len(nums) == 2
         return [num * self.multiplier.num if num is not None else None for num in nums]
-
-    def direction(self, value):
-        self.checkval(value)
-        lower, upper = value
-        if all([x is None for x in value]): return 'unbounded'
-        elif lower is None: return 'lower'
-        elif upper is None: return 'upper'
-        elif lower == upper: return 'state'
-        else: return 'center' 
-    
+   
     # TRANSFORMATIONS
     def average(self, *args, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
-        return self.transformation(*args, method='average', datatype='num', weight='{:.0f}%wt'.format(weight * 100), **kwargs)    
+        return self.transformation(*args, method='average', datatype='num', weight='{:.0f}%wt'.format(weight * 100), numdirection='average', **kwargs)    
     
     def cumulate(self, *args, direction, **kwargs): 
         assert direction == 'upper' or direction == 'lower'
-        return self.transformation(*args, method='cumulate', datatype='num', direction=direction, **kwargs)    
+        return self.transformation(*args, method='cumulate', datatype='num', direction=direction, numdirection=direction, **kwargs)    
 
 
 
