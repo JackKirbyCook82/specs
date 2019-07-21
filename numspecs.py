@@ -104,10 +104,11 @@ class NumSpec:
     def normalize(self, *args, axis, **kwargs): return self.transformation(*args, method='normalize', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
     def standardize(self, *args, axis, **kwargs): return self.transformation(*args, method='standardize', axis=axis, multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
     def minmax(self, *args, axis, **kwargs): return self.transformation(*args, method='minmax', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
-    def group(self, *args, **kwargs): return self.transformation(*args, method='group', datatype='range', **kwargs)
-    def cumulate(self, *args, direction, **kwargs): 
+    def group(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='group', **kwargs)
+    def uncumulate(self, *args, direction, **kwargs): 
         assert direction == 'lower' or direction == 'upper'
-        return self.transformation(*args, method='cumulate', direction=direction, numdirection=direction, **kwargs)
+        assert direction == self.numdirection
+        return self.transformation(*args, datatype='range', method='uncumulate', numdirection='state', **kwargs)
 
    
 @NumSpec.register('range')
@@ -148,12 +149,14 @@ class RangeSpec:
     def average(self, *args, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
-        return self.transformation(*args, method='average', datatype='num', weight='{:.0f}%wt'.format(weight * 100), numdirection='average', **kwargs)    
+        return self.transformation(*args, datatype='num', method='average', weight='{:.0f}%wt'.format(weight * 100), numdirection='average', **kwargs)    
     
     def cumulate(self, *args, direction, **kwargs): 
         assert direction == 'upper' or direction == 'lower'
-        return self.transformation(*args, method='cumulate', datatype='num', direction=direction, numdirection=direction, **kwargs)    
+        return self.transformation(*args, datatype='num', method='cumulate', direction=direction, numdirection=direction, **kwargs)    
 
+    def group(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'group'))
+    def uncumulate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'uncumulate'))
 
 
 

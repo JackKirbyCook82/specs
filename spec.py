@@ -23,12 +23,13 @@ __license__ = ""
 
 
 datatransformations = DataManipulation('{data}')
-datatransformations['normalize'] = '({axis}|quantiles_{data})'
-datatransformations['standardize'] = '({axis}|zscores_{data})'
-datatransformations['minmax'] = '({axis}|minmax_{data})'
+datatransformations['normalize'] = '(quantiles_{data})'
+datatransformations['standardize'] = '(zscores_{data})'
+datatransformations['minmax'] = '(minmax_{data})'
 datatransformations['average'] = '({weight}|avg_{data})'
 datatransformations['cumulate'] = '({direction}|cum_{data})'
-datatransformations['group'] = '({data}|bins)'
+datatransformations['group'] = '(bins_{data})'
+datatransformations['uncumulate'] = '({direction}|uncum_{data})'
 
 dataoperations = DataManipulation('{data}')
 dataoperations['multiply'] = '({data}*{other})'
