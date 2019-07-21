@@ -20,6 +20,7 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
+_INF = '∞'
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
 
@@ -63,7 +64,7 @@ class NumSpec:
     def checkstr(self, string):
         if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1: raise SpecStringError(self, string)
     def checkval(self, value): 
-        if not isinstance(value, Number): raise SpecValueError(self, value)
+        if not isinstance(value, (Number, type(None))): raise SpecValueError(self, value)
     
     def asstr(self, value): 
         return self.numstr(value)     
@@ -100,6 +101,7 @@ class NumSpec:
         return self.operation(other, *args, method='divide', multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring, **kwargs) 
 
     # TRANSFORMATIONS
+    def torange(self, *args, **kwargs): return self.transformation(*args, datatype='range', **kwargs)
     def scale(self, *args, method, axis, **kwargs): return getattr(self, method)(*args, method=method, axis=axis, **kwargs)
     def normalize(self, *args, axis, **kwargs): return self.transformation(*args, method='normalize', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
     def standardize(self, *args, axis, **kwargs): return self.transformation(*args, method='standardize', axis=axis, multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
@@ -131,6 +133,8 @@ class RangeSpec:
         if not isinstance(value, list): raise SpecValueError(self, value)
         if not len(value) == 2: raise SpecValueError(self, value)
         if not all([isinstance(num, (Number, type(None))) for num in value]): raise SpecValueError(self, value) 
+        if None not in value: 
+            if value[0] > value[-1]: raise SpecValueError(self, value)
     
     def asstr(self, value):    
         if self.direction(value) == 'state': rangestr = self.numstr(value[0])
@@ -145,7 +149,9 @@ class RangeSpec:
         assert len(nums) == 2
         return [num * self.multiplier.num if num is not None else None for num in nums]
    
-    # TRANSFORMATIONS
+    # TRANSFORMATIONS    
+    def tonums(self, *args, **kwargs): return self.transformation(*args, datatype='num', **kwargs)
+    
     def average(self, *args, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
