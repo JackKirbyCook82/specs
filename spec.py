@@ -23,13 +23,27 @@ __license__ = ""
 
 
 datatransformations = DataManipulation('{data}')
-datatransformations['normalize'] = '(quantiles_{data})'
-datatransformations['standardize'] = '(zscores_{data})'
-datatransformations['minmax'] = '(minmax_{data})'
-datatransformations['average'] = '({weight}|avg_{data})'
-datatransformations['cumulate'] = '({direction}|cum_{data})'
-datatransformations['group'] = '(bins_{data})'
-datatransformations['uncumulate'] = '({direction}|uncum_{data})'
+#datatransformations['normalize'] = '({axis}|quantiles_{data})'
+#datatransformations['standardize'] = '({axis}|zscores_{data})'
+#datatransformations['minmax'] = '({axis}|minmax_{data})'
+
+#datatransformations['mean'] = '({axis}|mean_{data})'
+#datatransformations['summuation'] = '({axis}|sum_{data})'
+#datatransformations['stdev'] = '({axis}|stdev_{data})'
+#datatransformations['minimum'] = '({axis}|min_{data})'
+#datatransformations['maximum'] = '({axis}|max_{data})'
+
+#datatransformations['weightaverage'] = '({axis}|wtavg_{data})'
+
+#datatransformations['movingaverage'] = '({axis}|{period}mavg_{data})'
+#datatransformations['movingtotal'] = '({axis}|{period}mtot_{data})'
+#datatransformations['movingbracket'] = '({axis}|{period}mrange_{data})'
+
+#datatransformations['uncumulate'] = '({direction}|uncum_{data})'
+#datatransformations['average'] = '({weight}|avg_{data})'
+#datatransformations['cumulate'] = '({direction}|cum_{data})'
+
+#datatransformations['bounded'] = '(bounded_{data})'
 
 dataoperations = DataManipulation('{data}')
 dataoperations['multiply'] = '({data}*{other})'
@@ -117,10 +131,10 @@ class Spec(ABC):
         return self.subclasses()[datatype](**attrs)        
     
     # TRANSFORMATIONS
-    def transformation(self, *args, method, **kwargs):
+    def transformation(self, *args, method, how, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = datatransformations[method](data=self.data, method=method, **kwargs)
+        attrs['data'] = datatransformations[method](data=self.data, method=method, how=how, **kwargs)
         return self.subclasses()[datatype](**attrs)
         
     # FILES

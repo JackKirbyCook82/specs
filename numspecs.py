@@ -10,6 +10,7 @@ import re
 from numbers import Number
 
 from utilities.quantities import Multiplier, Unit
+from utilities.dispatchers import clskey_singledispatcher as keydispatcher
 
 from specs.spec import Spec, samespec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
 
@@ -34,7 +35,7 @@ def _numfromstr(numstr):
 
 @Spec.register('num')
 class NumSpec:  
-    numdirections = {'upper':"▲", 'lower':"▼", 'state':"", 'average':'~'}
+    numdirections = {'upper':"▲", 'lower':"▼", 'state':""}
     
     @property
     def multiplier(self): return self.__multiplier
@@ -63,11 +64,13 @@ class NumSpec:
         
     def checkstr(self, string):
         if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1: raise SpecStringError(self, string)
+    
     def checkval(self, value): 
         if not isinstance(value, (Number, type(None))): raise SpecValueError(self, value)
     
     def asstr(self, value): 
         return self.numstr(value)     
+    
     def asval(self, string): 
         nums = [num for num in _numfromstr(string)]
         assert len(nums) == 1
@@ -100,18 +103,33 @@ class NumSpec:
         numstring = kwargs.get('numstring', self.numstring) 
         return self.operation(other, *args, method='divide', multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring, **kwargs) 
 
-    # TRANSFORMATIONS
-    def torange(self, *args, **kwargs): return self.transformation(*args, datatype='range', **kwargs)
-    def scale(self, *args, method, axis, **kwargs): return getattr(self, method)(*args, method=method, axis=axis, **kwargs)
-    def normalize(self, *args, axis, **kwargs): return self.transformation(*args, method='normalize', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
-    def standardize(self, *args, axis, **kwargs): return self.transformation(*args, method='standardize', axis=axis, multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
-    def minmax(self, *args, axis, **kwargs): return self.transformation(*args, method='minmax', axis=axis, multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
-    def group(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='group', **kwargs)
-    def uncumulate(self, *args, direction, **kwargs): 
+    # TRANSFORMATIONS    
+    @keydispatcher
+    def moving(self, *args, method, **kwargs): raise KeyError(method)
+    @moving.register('average')
+    def __average(self, *args, **kwargs): return self.transformation(*args, method='moving', how='average', numdirection='state', **kwargs)
+    @moving.register('total')
+    def __total(self, *args, **kwargs): return self.transformation(*args, method='moving', how='total', numdirection='state', **kwargs)
+    @moving.register('bracket')
+    def __bracket(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='moving', how='bracket', numdirection='state', **kwargs)
+    
+    @keydispatcher
+    def scale(self, *args, method, **kwargs): raise KeyError(method)
+    @scale.register('normalize')
+    def __normalize(self, *args, **kwargs): return self.transformation(*args, method='scale', how='normalize', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    @scale.register('standardize')
+    def __standardize(self, *args, **kwargs): return self.transformation(*args, method='scale', how='standardize', multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    @scale.register('minmax')
+    def __minmax(self, *args, **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)    
+    
+    @keydispatcher
+    def unconsolidate(self, *args, method, **kwargs): raise KeyError(method)
+    @unconsolidate.register('uncumulate')
+    def __uncumulate(self, *args, direction, **kwargs): 
         assert direction == 'lower' or direction == 'upper'
         assert direction == self.numdirection
-        return self.transformation(*args, datatype='range', method='uncumulate', numdirection='state', **kwargs)
-
+        return self.transformation(*args, datatype='range', method='unconsolidate', how='uncumulate', numdirection='state', **kwargs)
+    
    
 @NumSpec.register('range')
 class RangeSpec:
@@ -129,6 +147,7 @@ class RangeSpec:
 
     def checkstr(self, string): 
         if not bool(string): raise SpecStringError(self, string)
+    
     def checkval(self, value): 
         if not isinstance(value, list): raise SpecValueError(self, value)
         if not len(value) == 2: raise SpecValueError(self, value)
@@ -138,8 +157,9 @@ class RangeSpec:
     
     def asstr(self, value):    
         if self.direction(value) == 'state': rangestr = self.numstr(value[0])
-        else: rangestr = self.delimiter.join([self.numstr(num) for num in value if num is not None])          
+        rangestr = self.delimiter.join([self.numstr(num) for num in value if num is not None])   
         return self.directions[self.direction(value)] + rangestr
+    
     def asval(self, string):
         nums = [num for num in _numfromstr(string)]
         if self.directions['upper'] in string: nums = [*nums, None]
@@ -147,22 +167,35 @@ class RangeSpec:
         elif self.directions['unbounded'] in string: nums = [None, None]
         if len(nums) == 1: nums = [*nums, *nums]
         assert len(nums) == 2
+        if None not in nums: nums = [min(nums), max(nums)]
         return [num * self.multiplier.num if num is not None else None for num in nums]
    
     # TRANSFORMATIONS    
-    def tonums(self, *args, **kwargs): return self.transformation(*args, datatype='num', **kwargs)
+    @keydispatcher
+    def consolidation(self, *args, method, **kwargs): raise KeyError(method)
     
-    def average(self, *args, weight=0.5, **kwargs): 
+    @consolidation.register('average')
+    def __average(self, *args, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
-        return self.transformation(*args, datatype='num', method='average', weight='{:.0f}%wt'.format(weight * 100), numdirection='average', **kwargs)    
+        return self.transformation(*args, datatype='num', method='consolidation', how='average', weight='{:.0f}%'.format(weight * 100), **kwargs)    
     
-    def cumulate(self, *args, direction, **kwargs): 
+    @consolidation.register('cumulate')
+    def __cumulate(self, *args, direction, **kwargs): 
         assert direction == 'upper' or direction == 'lower'
-        return self.transformation(*args, datatype='num', method='cumulate', direction=direction, numdirection=direction, **kwargs)    
+        return self.transformation(*args, datatype='num', method='consolidation', how='cumulate', direction=direction, numdirection=direction, **kwargs)    
 
-    def group(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'group'))
-    def uncumulate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'uncumulate'))
+
+
+
+
+
+
+
+
+
+
+
 
 
 
