@@ -39,7 +39,7 @@ class CategorySpec:
     @samespec
     def __eq__(self, other): return self.categories == other.categories    
     
-    def todict(self): return dict(data=self.data, datatype=self.datatype, databasis=self.categories)
+    def todict(self): return dict(super().todict(), databasis=self.categories)
     
     # OPERATIONS
     @samespec

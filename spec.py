@@ -13,41 +13,13 @@ import json
 
 from utilities.strings import uppercase
 
-from specs.data import DataManipulation
+from specs.specdata import dataoperation, datatransformation
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
 __all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
-
-
-datatransformations = DataManipulation('{data}')
-#datatransformations['normalize'] = '({axis}|quantiles_{data})'
-#datatransformations['standardize'] = '({axis}|zscores_{data})'
-#datatransformations['minmax'] = '({axis}|minmax_{data})'
-
-#datatransformations['mean'] = '({axis}|mean_{data})'
-#datatransformations['summuation'] = '({axis}|sum_{data})'
-#datatransformations['stdev'] = '({axis}|stdev_{data})'
-#datatransformations['minimum'] = '({axis}|min_{data})'
-#datatransformations['maximum'] = '({axis}|max_{data})'
-
-#datatransformations['weightaverage'] = '({axis}|wtavg_{data})'
-
-#datatransformations['movingaverage'] = '({axis}|{period}mavg_{data})'
-#datatransformations['movingtotal'] = '({axis}|{period}mtot_{data})'
-#datatransformations['movingbracket'] = '({axis}|{period}mrange_{data})'
-
-#datatransformations['uncumulate'] = '({direction}|uncum_{data})'
-#datatransformations['average'] = '({weight}|avg_{data})'
-#datatransformations['cumulate'] = '({direction}|cum_{data})'
-
-#datatransformations['bounded'] = '(bounded_{data})'
-
-dataoperations = DataManipulation('{data}')
-dataoperations['multiply'] = '({data}*{other})'
-dataoperations['divide'] = '({data}/{other})'
 
 
 def samespec(function):
@@ -68,11 +40,11 @@ class SpecOperationNotSupportedError(Exception):
     def __init__(self, spec, other, operation): super().__init__('{}.{}({})'.format(repr(spec), operation, repr(other)))
 class SpecTransformationNotSupportedError(Exception):
     def __init__(self, spec, transformation, method): super().__init__('{}.{}(method={})'.format(repr(spec), transformation, method))   
-       
+    
     
 class Spec(ABC):
     def __new__(cls, *args, **kwargs):
-        if cls == Spec: return cls.subclasses()[kwargs['datatype']](*args, **kwargs)
+        if cls == Spec: return cls.getsubclass(kwargs['datatype'])(*args, **kwargs)
         else:
             assert hasattr(cls, 'datatype')
             return super().__new__(cls)
@@ -80,10 +52,11 @@ class Spec(ABC):
     @property
     def data(self): return self.__data
     @property
-    def name(self): return '_'.join([uppercase(self.data, index=0, withops=True), self.__class__.__name__, 'Spec'])
+    def name(self): return '_'.join([self.data, self.datatype, 'Spec'])
     @property
     def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '))  
-    def __init__(self, *args, data, **kwargs): self.__data = data
+    def todict(self): return dict(data=self.data, datatype=self.datatype)
+    def __init__(self, *args, data, **kwargs): self.__data = uppercase(data)
     
     def __add__(self, other): return self.add(other)
     def __sub__(self, other): return self.subtract(other)
@@ -100,22 +73,22 @@ class Spec(ABC):
     @abstractmethod
     def checkval(value): pass
     @abstractmethod
-    def todict(self): pass
-    @abstractmethod
     def __eq__(self, other): pass
 
     # REGISTER SUBCLASSES  
     __subclasses = {}      
     @classmethod
-    def subclasses(cls): return cls.__subclasses     
+    def subclasses(cls): return cls.__subclasses
+    @classmethod
+    def getsubclass(cls, datatype): return cls.__subclasses[datatype.lower()]     
     
     @classmethod
     def register(cls, datatype):  
         def wrapper(subclass):
             name = subclass.__name__
             bases = (subclass, cls)
-            newsubclass = type(name, bases, dict(datatype=datatype))
-            Spec.__subclasses[datatype] = newsubclass
+            newsubclass = type(name, bases, dict(datatype=uppercase(datatype)))
+            Spec.__subclasses[datatype.lower()] = newsubclass
             return newsubclass
         return wrapper  
 
@@ -127,15 +100,15 @@ class Spec(ABC):
     def operation(self, other, *args, method, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = dataoperations[method](data=self.data, other=other.data, method=method, **kwargs)
-        return self.subclasses()[datatype](**attrs)        
+        attrs['data'] = dataoperation(self.data, other.data, *args, method=method, **kwargs)
+        return self.getsubclass(datatype)(**attrs)        
     
     # TRANSFORMATIONS
     def transformation(self, *args, method, how, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = datatransformations[method](data=self.data, method=method, how=how, **kwargs)
-        return self.subclasses()[datatype](**attrs)
+        attrs['data'] = datatransformation(self.data, *args, method=method, how=how, **kwargs)
+        return self.getsubclass(datatype)(**attrs)   
         
     # FILES
     def tojson(self, file):
