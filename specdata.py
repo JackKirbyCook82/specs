@@ -6,8 +6,6 @@ Created on Fri Apr 12 2018
 
 """
 
-from utilities.strings import uppercase
-
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
 __all__ = ['dataoperation', 'datatransformation']
@@ -28,8 +26,7 @@ def dataoperation(data, other, *args, method, **kwargs):
     else: return data 
 
 
-def datatransformation(data, *args, method, how, axis=None, **kwargs):
-    axisstr = '[{axis}]'.format(axis=uppercase(axis)) if axis else ''
+def datatransformation(data, *args, method, how, **kwargs):
     modstr = TRANSFORMATIONS[method][how].format(**kwargs)
     datastr = '({data})'.format(data=data) if '_' in data else data
     return '_'.join([modstr, datastr])
