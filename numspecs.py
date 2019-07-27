@@ -122,13 +122,15 @@ class NumSpec:
     @scale.register('minmax')
     def __minmax(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)    
     
-    @keydispatcher('method')
+    @keydispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
     @unconsolidate.register('uncumulate')
     def __uncumulate(self, *args, how, direction, **kwargs): 
         assert direction == 'lower' or direction == 'upper'
         assert direction == self.numdirection
         return self.transformation(*args, datatype='range', method='unconsolidate', how='uncumulate', numdirection='state', **kwargs)
+    @unconsolidate.register('group')
+    def __group(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='unconsolidate', how='group', numdirection='state', **kwargs)
     
    
 @NumSpec.register('range')
