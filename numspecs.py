@@ -112,6 +112,8 @@ class NumSpec:
     def __total(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='total', numdirection='state', **kwargs)
     @moving.register('bracket')
     def __bracket(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='moving', how='bracket', numdirection='state', **kwargs)
+    @moving.register('differential')
+    def __differential(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='differential', numdirection='state', **kwargs)
     
     @keydispatcher('how')
     def scale(self, *args, how, **kwargs): raise KeyError(how)
