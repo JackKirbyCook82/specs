@@ -134,6 +134,14 @@ class NumSpec:
     @unconsolidate.register('group')
     def __group(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='unconsolidate', how='group', numdirection='state', **kwargs)
     
+    @keydispatcher('how')
+    def factor(self, *args, how, factor, **kwargs): raise KeyError(how)
+    @factor.register('multiply')
+    def __multiply(self, *args, how, factor, **kwargs): return self.transformation(*args, method='factor', how='multiply', factor=factor, **kwargs)
+    @factor.register('divide')
+    def __divide(self, *args, how, factor, **kwargs): return self.transformation(*args, method='factor', how='multiply', factor=factor, **kwargs)
+
+    
    
 @NumSpec.register('range')
 class RangeSpec:
@@ -189,7 +197,7 @@ class RangeSpec:
         assert direction == 'upper' or direction == 'lower'
         return self.transformation(*args, datatype='num', method='consolidate', how='cumulate', direction=direction, numdirection=direction, **kwargs)    
 
-
+    def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
 
 
 

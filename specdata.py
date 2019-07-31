@@ -14,7 +14,8 @@ __license__ = ""
 
 
 OPERATIONS = {'multiply':'*', 'divide':'/'}
-TRANSFORMATIONS = {'scale': dict(normalize='Quantiles', standardize='ZScores', minmax='MinMax'), 
+TRANSFORMATIONS = {'factor': dict(multiply='X{factor}', divide='/{factor}'),
+                   'scale': dict(normalize='Quantiles', standardize='ZScores', minmax='MinMax'), 
                    'moving': dict(average='{period}MAvg', total='{period}MTotal', bracket='{period}MRange', differential='MDiff'),
                    'consolidate': dict(average='{weight}Avg', cumulate='{direction}Cum'), 
                    'unconsolidate': dict(cumulate='{direction}UnCum', group='Bins'),
