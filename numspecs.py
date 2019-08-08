@@ -90,18 +90,18 @@ class NumSpec:
     def multiply(self, other, *args, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply') 
         unit = self.unit * other.unit
-        multiplier = self.multiplier * other.multiplier  
-        numformat = kwargs.get('numformat', '{:.0f}')
-        numstring = kwargs.get('numstring', self.numstring)
-        return self.operation(other, *args, method='multiply', multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring, **kwargs) 
+        kwargs.update({'multiplier':kwargs.get('multiplier', self.multiplier * other.multiplier)}) 
+        kwargs.update({'numformat':kwargs.get('numformat', '{:.0f}')})
+        kwargs.update({'numstring':kwargs.get('numstring', self.numstring)})
+        return self.operation(other, *args, method='multiply', unit=unit, **kwargs) 
         
     def divide(self, other, *args, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'divide') 
         unit = self.unit / other.unit
-        multiplier = self.multiplier / other.multiplier        
-        numformat = kwargs.get('numformat', '{:.2f}')
-        numstring = kwargs.get('numstring', self.numstring) 
-        return self.operation(other, *args, method='divide', multiplier=multiplier, unit=unit, numformat=numformat, numstring=numstring, **kwargs) 
+        kwargs.update({'multiplier':kwargs.get('multiplier', self.multiplier / other.multiplier)}) 
+        kwargs.update({'numformat':kwargs.get('numformat', '{:.2f}')})
+        kwargs.update({'numstring':kwargs.get('numstring', self.numstring)})
+        return self.operation(other, *args, method='divide', unit=unit, **kwargs) 
 
     # TRANSFORMATIONS    
     @keydispatcher('how')
