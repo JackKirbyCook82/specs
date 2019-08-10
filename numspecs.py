@@ -22,8 +22,12 @@ __license__ = ""
 
 
 _INF = '∞'
+_MULTIPLYFORMATING = {'numformat', '{:.0f}'}
+_DIVIDEFORMATING = {'numformat', '{:.2f}'}
+
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
+
 
 def _numfromstr(numstr): 
     nums = re.findall(r"[-+]?\d*\.\d+|\d+", numstr)
@@ -87,21 +91,21 @@ class NumSpec:
     @samespec
     def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
 
-    def multiply(self, other, *args, **kwargs): 
+    def multiply(self, other, *args, formating=_MULTIPLYFORMATING, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply') 
-        unit = self.unit * other.unit
-        kwargs.update({'multiplier':kwargs.get('multiplier', self.multiplier * other.multiplier)}) 
-        kwargs.update({'numformat':kwargs.get('numformat', '{:.0f}')})
-        kwargs.update({'numstring':kwargs.get('numstring', self.numstring)})
-        return self.operation(other, *args, method='multiply', unit=unit, **kwargs) 
+        unit = self.unit * other.unit        
+        multiplier = formating.get('multiplier', self.multiplier * other.multiplier)
+        numformat = formating.get('numformat', '{:.0f}')
+        numstring = formating.get('numstring', self.numstring)
+        return self.operation(other, *args, method='multiply', unit=unit, multiplier=multiplier, numformat=numformat, numstring=numstring, **kwargs) 
         
-    def divide(self, other, *args, **kwargs): 
+    def divide(self, other, *args, formating=_DIVIDEFORMATING, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'divide') 
         unit = self.unit / other.unit
-        kwargs.update({'multiplier':kwargs.get('multiplier', self.multiplier / other.multiplier)}) 
-        kwargs.update({'numformat':kwargs.get('numformat', '{:.2f}')})
-        kwargs.update({'numstring':kwargs.get('numstring', self.numstring)})
-        return self.operation(other, *args, method='divide', unit=unit, **kwargs) 
+        multiplier = formating.get('multiplier', self.multiplier / other.multiplier)
+        numformat = formating.get('numformat', '{:.2f}')
+        numstring = formating.get('numstring', self.numstring)
+        return self.operation(other, *args, method='divide', unit=unit, multiplier=multiplier, numformat=numformat, numstring=numstring, **kwargs) 
 
     # TRANSFORMATIONS    
     @keydispatcher('how')
