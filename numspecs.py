@@ -120,13 +120,13 @@ class NumSpec:
     def __differential(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='differential', numdirection='state', **kwargs)
     
     @keydispatcher('how')
-    def scale(self, *args, how, **kwargs): raise KeyError(how)
+    def scale(self, *args, how, along, **kwargs): raise KeyError(how)
     @scale.register('normalize')
-    def __normalize(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='normalize', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    def __normalize(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='normalize', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)
     @scale.register('standardize')
-    def __standardize(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='standardize', multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)
+    def __standardize(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='standardize', multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)
     @scale.register('minmax')
-    def __minmax(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', **kwargs)    
+    def __minmax(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)    
     
     @keydispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
