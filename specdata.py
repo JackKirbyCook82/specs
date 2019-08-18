@@ -13,23 +13,54 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-OPERATIONS = {'multiply':'*', 'divide':'/'}
-TRANSFORMATIONS = {'factor': dict(multiply='X{factor}', divide='/{factor}'),
-                   'scale': dict(normalize='{along}|Quantiles', standardize='{along}|ZScores', minmax='{along}|MinMax'), 
-                   'moving': dict(average='{period}MAvg', total='{period}MTotal', bracket='{period}MRange', differential='MDiff'),
-                   'consolidate': dict(average='{weight}Avg', cumulate='{direction}Cum'), 
-                   'unconsolidate': dict(cumulate='{direction}UnCum', group='Bins'),
-                   'reduction': dict(summation='Sum', mean='Mean', stdev='StDev', minimum='Min', maximum='Max', wtaverage='WtAvg')}
+OPERATION_CHARS = '/*+-_ |'
+
+OPERATIONS = dict(multiply = '{data}*{other}', 
+                  divide = '{data}/{other}')
+
+TRANSFORMATIONS = {'factor': dict(multiply = '{factor}*{data}', 
+                                  divide = '{factor}/{data}'),
+                   'scale': dict(normalize = '{axis}|Quantiles|{data}', 
+                                 standardize = '{axis}|ZScores|{data}', 
+                                 minmax = '{axis}|MinMax|{data}'), 
+                   'moving': dict(average = '{period}MAvg|{data}', 
+                                  total = '{period}MTotal|{data}', 
+                                  bracket = '{period}MRange|{data}', 
+                                  differential='MDiff|{data}'),
+                   'consolidate': dict(average = '{weight}Avg|{data}', 
+                                       cumulate = '{direction}Cum|{data}'), 
+                   'unconsolidate': dict(cumulate = '{direction}UnCum|{data}', 
+                                         group = 'Bins|{data}'),
+                   'reduction': dict(summation = 'Sum{data}', 
+                                     mean = 'Mean{data}', 
+                                     stdev = 'StDev{data}', 
+                                     minimum = 'Min{data}', 
+                                     maximum = 'Max{data}',
+                                     wtaverage = 'WtAvg{data}')}
 
 
 def dataoperation(data, other, *args, method, **kwargs):
-    if method in OPERATIONS: return OPERATIONS[method].join([data, other])
-    else: return data 
+    if any([opchar in data for opchar in OPERATION_CHARS]): data = '({})'.format(data)  
+    if any([opchar in data for opchar in OPERATION_CHARS]): other = '({})'.format(other)      
+    modifydata = OPERATIONS[method].format(data=data, other=other) if method in OPERATIONS else data
+    return modifydata
 
 
 def datatransformation(data, *args, method, how, **kwargs):
-    modstr = TRANSFORMATIONS[method][how].format(**kwargs)
-    datastr = '({data})'.format(data=data) if '_' in data else data
-    return '_'.join([modstr, datastr])
+    if any([opchar in data for opchar in OPERATION_CHARS]): data = '({})'.format(data)
+    modifydata = TRANSFORMATIONS[method][how].format(data=data, **kwargs)
+    return modifydata
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -24,8 +24,8 @@ __license__ = ""
 
 def samespec(function):
     def wrapper(self, other, *args, **kwargs):
-        if type(self) != type(other): raise SpecOperationNotSupportedError(self, other, function.__name__)
-        if self.data != other.data: raise SpecOperationNotSupportedError(self, other, function.__name__)
+        if type(self) != type(other): raise SpecOperationNotSupportedError(type(self).__name__, type(other).__name__, function.__name__)
+        if self.data != other.data: raise SpecOperationNotSupportedError(type(self).__name__, type(other).__name__, function.__name__)
         return function(self, other, *args, **kwargs)    
     update_wrapper(wrapper, function)
     return wrapper

@@ -22,8 +22,9 @@ __license__ = ""
 
 
 _INF = '∞'
+_ALL = '*'
 _MULTIPLYFORMATING = {'numformat', '{:.0f}'}
-_DIVIDEFORMATING = {'numformat', '{:.2f}'}
+_DIVIDEFORMATING = {'numformat', '{:.3f}'}
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
@@ -67,28 +68,30 @@ class NumSpec:
     def numstr(self, value): return self.numstring.format(num=self.valuestr(value), multi=str(self.multiplier), unit=str(self.unit), drt=self.numdirections[self.numdirection])   
         
     def checkstr(self, string):
-        if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1: raise SpecStringError(self, string)
+        if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1 and not _ALL in string: raise SpecStringError(self, string)
     
     def checkval(self, value): 
         if not isinstance(value, (Number, type(None))): raise SpecValueError(self, value)
     
     def asstr(self, value): 
-        return self.numstr(value)     
+        if isinstance(value, Number): return self.numstr(value)     
+        elif value is None: return _ALL
+        else: raise ValueError(value)
     
     def asval(self, string): 
         nums = [num for num in _numfromstr(string)]
-        assert len(nums) == 1
-        assert isinstance(nums[0], Number)
-        return nums[0] * self.multiplier.num
+        if len(nums) == 0: return None
+        elif len(nums) == 1:
+            assert isinstance(nums[0], Number)
+            return nums[0] * self.multiplier.num            
+        else: raise ValueError(string)
     
     @samespec
     def __eq__(self, other): return self.unit == other.unit
     def todict(self): return dict(**super().todict(), multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring, numdirection=self.numdirection)
 
     # OPERATIONS
-    @samespec
     def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
-    @samespec
     def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
 
     def multiply(self, other, *args, formating=_MULTIPLYFORMATING, **kwargs): 
@@ -122,11 +125,11 @@ class NumSpec:
     @keydispatcher('how')
     def scale(self, *args, how, along, **kwargs): raise KeyError(how)
     @scale.register('normalize')
-    def __normalize(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='normalize', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)
+    def __normalize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='normalize', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', axis=axis, **kwargs)
     @scale.register('standardize')
-    def __standardize(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='standardize', multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)
+    def __standardize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='standardize', multiplier=Multiplier(), unit=Unit('σ'), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', axis=axis, **kwargs)
     @scale.register('minmax')
-    def __minmax(self, *args, how, along='data', **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', along=along, **kwargs)    
+    def __minmax(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='minmax', multiplier=Multiplier('%'), unit=Unit(), numformat='{:.2f}', numstring='{drt}{num}{multi}{unit}', axis=axis, **kwargs)    
     
     @keydispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
@@ -150,7 +153,7 @@ class NumSpec:
 @NumSpec.register('range')
 class RangeSpec:
     delimiter = ' - '
-    directions = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':'...', 'center':''}
+    directions = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':_ALL, 'center':''}
 
     def direction(self, value):
         self.checkval(value)
