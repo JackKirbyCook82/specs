@@ -8,7 +8,6 @@ Created on Fri Apr 12 2018
 
 import os.path
 from abc import ABC, abstractmethod
-from functools import update_wrapper
 import json
 
 from utilities.strings import uppercase
@@ -17,18 +16,9 @@ from specs.specdata import dataoperation, datatransformation
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['Spec', 'samespec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
+__all__ = ['Spec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
-
-
-def samespec(function):
-    def wrapper(self, other, *args, **kwargs):
-        if type(self) != type(other): raise SpecOperationNotSupportedError(type(self).__name__, type(other).__name__, function.__name__)
-        if self.data != other.data: raise SpecOperationNotSupportedError(type(self).__name__, type(other).__name__, function.__name__)
-        return function(self, other, *args, **kwargs)    
-    update_wrapper(wrapper, function)
-    return wrapper
 
 
 class SpecStringError(Exception): 
@@ -93,7 +83,6 @@ class Spec(ABC):
         return wrapper  
 
     # EQUALITY
-    @samespec
     def __ne__(self, other): return not self.__eq__(other)
 
     # OPERATIONS

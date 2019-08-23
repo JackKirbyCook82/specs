@@ -33,9 +33,10 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-_INDEXKEY = 'key'
+_INDEXKEY = 'datakey'
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _allnull = lambda items: all([pd.isnull(item) for item in items])
+
 
 def parser(item, splitby): 
     if _allnull(_aslist(item)): return ''

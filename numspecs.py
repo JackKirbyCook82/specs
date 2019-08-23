@@ -12,7 +12,7 @@ from numbers import Number
 from utilities.quantities import Multiplier, Unit
 from utilities.dispatchers import clskey_singledispatcher as keydispatcher
 
-from specs.spec import Spec, samespec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
+from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -86,7 +86,6 @@ class NumSpec:
             return nums[0] * self.multiplier.num            
         else: raise ValueError(string)
     
-    @samespec
     def __eq__(self, other): return self.unit == other.unit
     def todict(self): return dict(**super().todict(), multiplier=str(self.multiplier), unit=str(self.unit), numformat=self.numformat, numstring=self.numstring, numdirection=self.numdirection)
 

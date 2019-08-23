@@ -6,7 +6,7 @@ Created on Fri Apr 12 2018
 
 """
 
-from specs.spec import Spec, samespec, SpecStringError, SpecValueError
+from specs.spec import Spec, SpecStringError, SpecValueError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -36,15 +36,11 @@ class CategorySpec:
     def asstr(self, value): return self.delimiter.join(value)
     def asval(self, string): return string.split(self.delimiter)
 
-    @samespec
-    def __eq__(self, other): return self.categories == other.categories    
-    
+    def __eq__(self, other): return self.categories == other.categories        
     def todict(self): return dict(super().todict(), databasis=self.categories)
     
     # OPERATIONS
-    @samespec
     def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
-    @samespec
     def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
     
 
