@@ -18,14 +18,23 @@ __license__ = ""
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
 
 
+def category_adapter(function):
+    def wrapper(self, *args, databasis, **kwargs):
+        assert isinstance(databasis, (tuple, list, set))
+        function(self, *args, categories=set(databasis), **kwargs)
+    return wrapper
+
+
+
 @Spec.register('category')
 class CategorySpec:
     delimiter = ' & '
     
     @property
     def categories(self): return self.__categories
-    def __init__(self, *args, databasis, **kwargs): 
-        self.__categories = list(set(_aslist(databasis)))    
+    @category_adapter
+    def __init__(self, *args, categories, **kwargs): 
+        self.__categories = categories  
         super().__init__(*args, **kwargs)
 
     def checkstr(self, string): 
