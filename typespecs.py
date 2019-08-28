@@ -15,26 +15,19 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
+_DELIMITER = '|'
+
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
-
-
-def category_adapter(function):
-    def wrapper(self, *args, databasis, **kwargs):
-        assert isinstance(databasis, (tuple, list, set))
-        function(self, *args, categories=set(databasis), **kwargs)
-    return wrapper
-
 
 
 @Spec.register('category')
 class CategorySpec:
-    delimiter = ' & '
-    
     @property
     def categories(self): return self.__categories
-    @category_adapter
+    
     def __init__(self, *args, categories, **kwargs): 
-        self.__categories = categories  
+        assert isinstance(categories, (tuple, list, set))
+        self.__categories = set(categories)  
         super().__init__(*args, **kwargs)
 
     def checkstr(self, string): 
@@ -42,17 +35,21 @@ class CategorySpec:
     def checkval(self, value):  
         if not all([item in self.__categories for item in value]): raise SpecValueError(self, _aslist(value))
     
-    def asstr(self, value): return self.delimiter.join(value)
-    def asval(self, string): return string.split(self.delimiter)
+    def asstr(self, value): return _DELIMITER.join(value)
+    def asval(self, string): return string.split(_DELIMITER)
 
     def __eq__(self, other): return self.categories == other.categories        
-    def todict(self): return dict(super().todict(), databasis=self.categories)
+    def todict(self): return dict(super().todict(), categories=self.categories)
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
     def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
     
-
+    @classmethod
+    def fromfile(cls, *args, databasis=[], **kwargs):
+        assert isinstance(databasis, (tuple, list, set))
+        assert len(set(databasis)) == len(databasis)
+        return cls(*args, categories=set(databasis), **kwargs)
 
 
 

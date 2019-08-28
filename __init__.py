@@ -45,7 +45,7 @@ def specs_fromfile(file, parsers):
     dataframe = dfs.dataframe_parser(dataframe, parsers=parsers, defaultparser=_defaultparser)
     dataframe.set_index('datakey', drop=True, inplace=True)
     specdata = {key:{item:value for item, value in values.items() if not _allnull(_aslist(value))} for key, values in dataframe.transpose().to_dict().items() if not _allnull(_aslist(values))}
-    return {key:Spec(**values) for key, values in specdata.items()}
+    return {key:Spec.fromfile(**values) for key, values in specdata.items()}
     
 
 

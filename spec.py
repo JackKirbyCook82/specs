@@ -111,7 +111,10 @@ class Spec(ABC):
             attrs = json.load(infile)
         return cls(**attrs)   
     
-    
+    @classmethod
+    def fromfile(cls, *args, data, datatype, databasis, **kwargs):
+        return cls.getsubclass(datatype).fromfile(*args, data=data, datatype=datatype, databasis=databasis, **kwargs)
+   
     
     
     
