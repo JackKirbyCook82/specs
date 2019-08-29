@@ -9,7 +9,7 @@ Created on Fri Apr 12 2018
 import re
 from numbers import Number
 
-from utilities.quantities import Multiplier, Unit
+from utilities.quantities import Multiplier, Unit, Heading
 from utilities.dispatchers import clskey_singledispatcher as keydispatcher
 
 from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
@@ -63,9 +63,10 @@ def _numformatting(num, *args, precision, nummultiplier, **kwargs):
 def _numstrformatting(num, *args, heading, multiplier, unit, numdirection, **kwargs):
     assert isinstance(multiplier, Multiplier)
     assert isinstance(unit, Unit)
+    assert isinstance(heading, Heading)
     if num is None: return _ALL
     numstr = _numformatting(num, *args, nummultiplier=multiplier.num, **kwargs)
-    return _NUMSTRFORMAT.format(numstr=numstr, heading=heading, multiplier=str(multiplier), unit=str(unit), numdirection=_NUMDIRECTIONS[numdirection], **kwargs)
+    return _NUMSTRFORMAT.format(numstr=numstr, heading=str(heading), multiplier=str(multiplier), unit=str(unit), numdirection=_NUMDIRECTIONS[numdirection], **kwargs)
 
 def _rangestrformatting(lowernum, uppernum, *args, **kwargs):
     return _DELIMITER.join([_numformatting(lowernum, *args, **kwargs), _numformatting(uppernum, *args, **kwargs)])
@@ -95,7 +96,7 @@ class NumSpec:
     @formatting
     def __init__(self, *args, numdirection, heading, precision, multiplier, unit, **kwargs): 
         assert numdirection in _NUMDIRECTIONS.keys()    
-        self.__heading = heading if isinstance(heading, Unit) else Unit.fromstr(str(heading)) 
+        self.__heading = heading if isinstance(heading, Heading) else Heading.fromstr(str(heading)) 
         self.__multiplier =  multiplier if isinstance(multiplier, Multiplier) else Multiplier.fromstr(str(multiplier)) 
         self.__unit = unit if isinstance(unit, Unit) else Unit.fromstr(str(unit)) 
         self.__precision = int(precision)
