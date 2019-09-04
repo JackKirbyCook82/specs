@@ -246,6 +246,10 @@ class RangeSpec:
         assert direction == 'upper' or direction == 'lower'
         return self.transformation(*args, datatype='num', method='consolidate', how='cumulate', direction=direction, numdirection=direction, **kwargs)    
 
+    @consolidate.register('differential')
+    def __differential(self, *args, how, **kwargs):
+        return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
+
     def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
 
 
