@@ -39,10 +39,10 @@ _allnull = lambda items: all([pd.isnull(item) for item in items])
 _allnotnull = lambda items: all([pd.notnull(item) for item in items])
 
 
-def specs_fromfile(file, parsers):
-    if not os.path.isfile(file): raise FileNotFoundError(file)
-    dataframe = dfs.dataframe_fromfile(file)
-    dataframe = dfs.dataframe_parser(dataframe, parsers=parsers, defaultparser=_defaultparser)
+def specs_fromfile(specs_file, specs_parsers):
+    if not os.path.isfile(specs_file): raise FileNotFoundError(specs_file)
+    dataframe = dfs.dataframe_fromfile(specs_file)
+    dataframe = dfs.dataframe_parser(dataframe, parsers=specs_parsers, defaultparser=_defaultparser)
     dataframe.set_index('datakey', drop=True, inplace=True)
     specdata = {key:{item:value for item, value in values.items() if not _allnull(_aslist(value))} for key, values in dataframe.transpose().to_dict().items() if not _allnull(_aslist(values))}
     return {key:Spec.fromfile(**values) for key, values in specdata.items()}
