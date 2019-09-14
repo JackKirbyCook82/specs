@@ -8,6 +8,7 @@ Created on Fri Apr 12 2018
 
 import re
 from numbers import Number
+from functools import update_wrapper
 
 from utilities.quantities import Multiplier, Unit, Heading
 from utilities.dispatchers import clskey_singledispatcher as keydispatcher
@@ -29,16 +30,7 @@ _NUMFORMAT = 'num:.{precision}f'
 _NUMSTRFORMAT = '{numdirection}{heading}{numstr}{multiplier}{unit}'
 _DIRECTIONS = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':_ALL, 'center':''}
 _NUMDIRECTIONS = {'upper':'▲', 'lower':'▼', 'state':''}
-
-_DEFAULT_FORMATTING = {'multiplier':'', 'precision':0}
-_MULTIPLY_FORMATTING = {'multiplier':'', 'precision':0}
-_DIVIDE_FORMATTING = {'multiplier':'', 'precision':3}
-_NORM_FORMATTING = {'multiplier':'%', 'precision':2}
-_STDEV_FORMATTING = {'multiplier':'', 'precision':2}
-_MINMAX_FORMATTING = {'multiplier':'%', 'precision':2}
-
-_DEFAULT_SPECDATA = {'numdirection':'state', 'heading':'', 'unit':''}
-
+_DEFAULTS = {'numdirection':'state', 'heading':'', 'precision':0, 'unit':'', 'multiplier':''}
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
@@ -72,11 +64,11 @@ def _rangestrformatting(lowernum, uppernum, *args, **kwargs):
     return _DELIMITER.join([_numformatting(lowernum, *args, **kwargs), _numformatting(uppernum, *args, **kwargs)])
 
 
-def formatting(function):
-    def wrapper(self, *args, formatting={}, **kwargs):
-        assert isinstance(formatting, dict)
+def _formatting(function):
+    def wrapper(*args, formatting={}, **kwargs):
         kwargs.update(formatting)
-        function(self, *args, **kwargs)
+        return function(*args, **kwargs)
+    update_wrapper(wrapper, function)
     return wrapper
 
 
@@ -93,7 +85,6 @@ class NumSpec:
     @property
     def precision(self): return self.__precision
     
-    @formatting
     def __init__(self, *args, numdirection, heading, precision, multiplier, unit, **kwargs): 
         assert numdirection in _NUMDIRECTIONS.keys()    
         self.__heading = heading if isinstance(heading, Heading) else Heading.fromstr(str(heading)) 
@@ -125,21 +116,19 @@ class NumSpec:
     def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
     def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
 
+    @_formatting
     def multiply(self, other, *args, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply') 
-        heading =  kwargs.get('heading', self.heading * other.heading)   
-        unit = self.unit * other.unit        
-        precision = kwargs.get('precision', _MULTIPLY_FORMATTING['precision'])  
-        multiplier = kwargs.get('multiplier', self.multiplier * other.multiplier)                 
-        return self.operation(other, *args, method='multiply', heading=heading, unit=unit, multiplier=multiplier, precision=precision, **kwargs) 
+        heading = kwargs.get('heading', self.heading * other.heading)   
+        unit = self.unit * other.unit                    
+        return self.operation(other, *args, method='multiply', heading=heading, unit=unit, **kwargs) 
         
+    @_formatting
     def divide(self, other, *args, **kwargs): 
         if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'divide') 
-        heading =  kwargs.get('heading', self.heading / other.heading)   
-        unit = self.unit / other.unit        
-        precision = kwargs.get('precision', _DIVIDE_FORMATTING['precision'])   
-        multiplier = kwargs.get('multiplier', self.multiplier / other.multiplier)               
-        return self.operation(other, *args, method='multiply', heading=heading, unit=unit, multiplier=multiplier, precision=precision, **kwargs) 
+        heading = kwargs.get('heading', self.heading / other.heading)
+        unit = self.unit / other.unit             
+        return self.operation(other, *args, method='divide', heading=heading, unit=unit, **kwargs) 
        
     # TRANSFORMATIONS    
     @keydispatcher('how')
@@ -156,11 +145,11 @@ class NumSpec:
     @keydispatcher('how')
     def scale(self, *args, how, along, **kwargs): raise KeyError(how)
     @scale.register('normalize')
-    def __normalize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='normalize', unit=Unit(), **_NORM_FORMATTING, axis=axis, **kwargs)
+    def __normalize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='normalize', unit='', multiplier='%', axis=axis, **kwargs)
     @scale.register('standardize')
-    def __standardize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='standardize', unit=Unit('σ'), **_STDEV_FORMATTING, axis=axis, **kwargs)
+    def __standardize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='standardize', unit='σ', multiplier='', axis=axis, **kwargs)
     @scale.register('minmax')
-    def __minmax(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='minmax', unit=Unit(), **_MINMAX_FORMATTING, axis=axis, **kwargs)    
+    def __minmax(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='minmax', unit='', multiplier='%', axis=axis, **kwargs)    
     
     @keydispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
@@ -175,22 +164,19 @@ class NumSpec:
     @keydispatcher('how')
     def factor(self, *args, how, factor, **kwargs): raise KeyError(how)
     @factor.register('multiply')
+    @_formatting
     def __multiply(self, *args, how, factor, **kwargs): 
-        precision = kwargs.get('precision', _MULTIPLY_FORMATTING['precision'])  
-        multiplier = kwargs.get('multiplier', _MULTIPLY_FORMATTING['multiplier'])       
-        return self.transformation(*args, method='factor', how='multiply', factor=factor, multiplier=multiplier, precision=precision, **kwargs)
+        return self.transformation(*args, method='factor', how='multiply', factor=factor, **kwargs)
     @factor.register('divide')
+    @_formatting
     def __divide(self, *args, how, factor, **kwargs): 
-        precision = kwargs.get('precision', _DIVIDE_FORMATTING['precision'])  
-        multiplier = kwargs.get('multiplier', _DIVIDE_FORMATTING['multiplier'])         
-        return self.transformation(*args, method='factor', how='divide', factor=factor, multiplier=multiplier, precision=precision, **kwargs)
+        return self.transformation(*args, method='factor', how='divide', factor=factor, **kwargs)
 
     @classmethod
     def fromfile(cls, *args, databasis={}, **kwargs):
         assert isinstance(databasis, dict)
-        specdata = {key:databasis.pop(key, value) for key, value in _DEFAULT_SPECDATA.items()}
-        formatting = {key:databasis.pop(key, value) for key, value in _DEFAULT_FORMATTING.items()}
-        return cls(*args, **specdata, **formatting, **kwargs)
+        formatting = {key:databasis.pop(key, value) for key, value in _DEFAULTS.items()}
+        return cls(*args, **formatting, **kwargs)
         
    
 @NumSpec.register('range')
