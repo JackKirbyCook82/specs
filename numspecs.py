@@ -183,11 +183,11 @@ class NumSpec:
 class RangeSpec:
     def direction(self, value):
         self.checkval(value)
-        lower, upper = value
+        lowernum, uppernum = value
         if all([x is None for x in value]): return 'unbounded'
-        elif lower is None: return 'lower'
-        elif upper is None: return 'upper'
-        elif lower == upper: return 'state'
+        elif lowernum is None: return 'lower'
+        elif uppernum is None: return 'upper'
+        elif lowernum == uppernum: return 'state'
         else: return 'center' 
 
     def checkstr(self, string): 
