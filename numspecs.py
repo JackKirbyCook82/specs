@@ -98,7 +98,7 @@ class NumSpec:
         if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1 and not _ALL in string: raise SpecStringError(self, string)
     
     def checkval(self, value): 
-        if not isinstance(value, (Number, type(None))): raise SpecValueError(self, value)
+        if not isinstance(value, Number): raise SpecValueError(self, value)
     
     def asstr(self, value): 
         self.checkval(value)
