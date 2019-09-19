@@ -8,12 +8,13 @@ Created on Fri Apr 12 2018
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['dataoperation', 'datatransformation']
+__all__ = ['data_operation', 'data_transformation']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-OPERATION_CHARS = '/*+-_ |'
+_FORMATTING = '/*+-_ |'
+
 
 OPERATIONS = dict(multiply = '{data}*{other}', 
                   divide = '{data}/{other}')
@@ -33,22 +34,27 @@ TRANSFORMATIONS = {'factor': dict(multiply = '{factor}*{data}',
                    'unconsolidate': dict(cumulate = '{direction}UnCum|{data}', 
                                          group = 'Bins|{data}'),
                    'reduction': dict(summation = 'Sum{data}', 
-                                     mean = 'Mean{data}', 
+                                     mean = 'Avg{data}', 
                                      stdev = 'StDev{data}', 
                                      minimum = 'Min{data}', 
                                      maximum = 'Max{data}',
-                                     wtaverage = 'WtAvg{data}')}
+                                     average = '{axis}|Avg{data}')}
 
 
-def dataoperation(data, other, *args, method, **kwargs):
-    if any([opchar in data for opchar in OPERATION_CHARS]): data = '({})'.format(data)  
-    if any([opchar in data for opchar in OPERATION_CHARS]): other = '({})'.format(other)      
+def data_operation(data, other, *args, method, **kwargs):
+    if method not in OPERATIONS.keys(): 
+        assert data == other
+        return data
+    if any([opchar in data for opchar in _FORMATTING]): data = '({})'.format(data)  
+    if any([opchar in data for opchar in _FORMATTING]): other = '({})'.format(other)      
     modifydata = OPERATIONS[method].format(data=data, other=other) if method in OPERATIONS else data
     return modifydata
 
 
-def datatransformation(data, *args, method, how, **kwargs):
-    if any([opchar in data for opchar in OPERATION_CHARS]): data = '({})'.format(data)
+def data_transformation(data, *args, method, how, **kwargs):
+    if method not in TRANSFORMATIONS.keys():
+        return data
+    if any([opchar in data for opchar in _FORMATTING]): data = '({})'.format(data)
     modifydata = TRANSFORMATIONS[method][how].format(data=data, **kwargs)
     return modifydata
 

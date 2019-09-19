@@ -12,7 +12,7 @@ import json
 
 from utilities.strings import uppercase
 
-from specs.specdata import dataoperation, datatransformation
+from specs.specdata import data_operation, data_transformation
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -34,7 +34,7 @@ class SpecTransformationNotSupportedError(Exception):
     
 class Spec(ABC):
     def __new__(cls, *args, **kwargs):
-        if cls == Spec: return cls.getsubclass(kwargs['datatype'])(*args, **kwargs)
+        if cls == Spec: return cls.getsubclass(kwargs['datatype'].lower())(*args, **kwargs)
         else:
             assert hasattr(cls, 'datatype')
             return super().__new__(cls)
@@ -42,11 +42,14 @@ class Spec(ABC):
     @property
     def data(self): return self.__data
     @property
-    def name(self): return '_'.join([self.data, self.datatype, 'Spec'])
+    def dataname(self): return uppercase(self.__data, withops=True)
+    @property
+    def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])
+    
     @property
     def jsonstr(self): return json.dumps({key:str(value) for key, value in self.todict().items()}, sort_keys=True, indent=3, separators=(',', ' : '))  
     def todict(self): return dict(data=self.data, datatype=self.datatype)
-    def __init__(self, *args, data, **kwargs): self.__data = uppercase(data)
+    def __init__(self, *args, data, **kwargs): self.__data = data
     
     def __add__(self, other): return self.add(other)
     def __sub__(self, other): return self.subtract(other)
@@ -77,7 +80,7 @@ class Spec(ABC):
         def wrapper(subclass):
             name = subclass.__name__
             bases = (subclass, cls)
-            newsubclass = type(name, bases, dict(datatype=uppercase(datatype)))
+            newsubclass = type(name, bases, dict(datatype=datatype.lower()))
             Spec.__subclasses[datatype.lower()] = newsubclass
             return newsubclass
         return wrapper  
@@ -89,14 +92,14 @@ class Spec(ABC):
     def operation(self, other, *args, method, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = dataoperation(self.data, other.data, *args, method=method, **kwargs)
+        attrs['data'] = data_operation(self.data, other.data, *args, method=method, **kwargs)
         return self.getsubclass(datatype)(**attrs)        
     
     # TRANSFORMATIONS
     def transformation(self, *args, method, how, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
-        attrs['data'] = datatransformation(self.data, *args, method=method, how=how, **kwargs)
+        attrs['data'] = data_transformation(self.data, *args, method=method, how=how, **kwargs)
         return self.getsubclass(datatype)(**attrs)   
         
     # FILES
