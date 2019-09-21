@@ -33,12 +33,14 @@ TRANSFORMATIONS = {'factor': dict(multiply = '{factor}*{data}',
                                        differential = 'Diff|{data}'), 
                    'unconsolidate': dict(cumulate = '{direction}UnCum|{data}', 
                                          group = 'Bins|{data}'),
-                   'reduction': dict(summation = 'Sum{data}', 
-                                     mean = 'Avg{data}', 
-                                     stdev = 'StDev{data}', 
-                                     minimum = 'Min{data}', 
-                                     maximum = 'Max{data}',
-                                     average = '{axis}|Avg{data}')}
+                   'reduction': dict(summation = 'Sum|{data}', 
+                                     average = 'Avg|{data}', 
+                                     stdev = 'Stdev|{data}', 
+                                     minimum = 'Min|{data}', 
+                                     maximum = 'Max|{data}'),
+                   'wtreduction':dict(average = '{axis}|WtAvg|{data}',
+                                      stdev = '{axis}|WtStdev|{data}',
+                                      median = '{axis}|WtMed|{data}')}
 
 
 def data_operation(data, other, *args, method, **kwargs):
