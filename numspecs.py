@@ -109,47 +109,66 @@ class NumSpec:
         num = [num for num in _numfromstr(string)][0]
         return num * self.multiplier.num if num is not None else None
 
-    def __eq__(self, other): return self.unit == other.unit
-    def todict(self): return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)
+    def __eq__(self, other): 
+        assert type(self) == type(other)
+        return self.unit == other.unit
+    
+    def todict(self): 
+        return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)
 
     # OPERATIONS
-    def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
-    def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
+    def add(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        return self.operation(other, *args, method='add', **kwargs)
+    def subtract(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract')         
+        return self.operation(other, *args, method='subtract', **kwargs)
 
     @_formatting
     def multiply(self, other, *args, **kwargs): 
-        if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'multiply') 
+        if other.datatype != 'num': raise SpecOperationNotSupportedError(self, other, 'multiply') 
         heading = kwargs.get('heading', self.heading * other.heading)   
         unit = self.unit * other.unit                    
         return self.operation(other, *args, method='multiply', heading=heading, unit=unit, **kwargs) 
         
     @_formatting
     def divide(self, other, *args, **kwargs): 
-        if type(other) != NumSpec: raise SpecOperationNotSupportedError(self, other, 'divide') 
+        if other.datatype != 'num': raise SpecOperationNotSupportedError(self, other, 'divide') 
         heading = kwargs.get('heading', self.heading / other.heading)
         unit = self.unit / other.unit             
         return self.operation(other, *args, method='divide', heading=heading, unit=unit, **kwargs) 
-       
+     
+    def couple(self, other, *args, **kwargs):
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'couple')
+        return self.operation(other, *args, datatype='range', method='couple', **kwargs)
+    
     # TRANSFORMATIONS    
     @keydispatcher('how')
-    def moving(self, *args, how, **kwargs): raise KeyError(how)
-    @moving.register('average')
-    def __average(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='average', numdirection='state', **kwargs)
-    @moving.register('total')
-    def __total(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='total', numdirection='state', **kwargs)
-    @moving.register('bracket')
-    def __bracket(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='moving', how='bracket', numdirection='state', **kwargs)
-    @moving.register('differential')
-    def __differential(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='differential', numdirection='state', **kwargs)
-    
-    @keydispatcher('how')
-    def scale(self, *args, how, along, **kwargs): raise KeyError(how)
+    def scale(self, *args, how, **kwargs): raise KeyError(how)
     @scale.register('normalize')
     def __normalize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='normalize', unit='', multiplier='%', axis=axis, **kwargs)
     @scale.register('standardize')
     def __standardize(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='standardize', unit='σ', multiplier='', axis=axis, **kwargs)
     @scale.register('minmax')
-    def __minmax(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='minmax', unit='', multiplier='%', axis=axis, **kwargs)    
+    def __minmax(self, *args, how, axis, **kwargs): return self.transformation(*args, method='scale', how='minmax', unit='', multiplier='%', axis=axis, **kwargs)        
+    
+    @keydispatcher('how')
+    def moving(self, *args, how, **kwargs): raise KeyError(how)
+    @moving.register('average')
+    def __average(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='average', numdirection='state', **kwargs)
+    @moving.register('summation')
+    def __summation(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='summation', numdirection='state', **kwargs)
+    @moving.register('couple')
+    def __movingcouple(self, *args, **kwargs): return self.transformation(*args, method='moving', how='couple', numdirection='state', **kwargs)
+    
+    @keydispatcher('how')
+    def groupby(self, *args, how, **kwargs): raise KeyError(how)
+    @groupby.register('bins')
+    def __bins(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='bins', **kwargs) 
+    @groupby.register('bins')
+    def __overlaps(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='overlaps', **kwargs)  
+    @groupby.register('bins')
+    def __contains(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='contains', **kwargs)      
     
     @keydispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
@@ -158,20 +177,10 @@ class NumSpec:
         assert direction == 'lower' or direction == 'upper'
         assert direction == self.numdirection
         return self.transformation(*args, datatype='range', method='unconsolidate', how='uncumulate', numdirection='state', **kwargs)
-    #@unconsolidate.register('group')
-    #def __group(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='unconsolidate', how='group', numdirection='state', **kwargs)
+    @unconsolidate.register('couple')
+    def __unconsolidatecouple(self, other, *args, how, **kwargs): 
+        return self.operation(other, *args, datatype='range', method='unconsolidate', how='couple', numdirection='state', **kwargs)
     
-    @keydispatcher('how')
-    def factor(self, *args, how, factor, **kwargs): raise KeyError(how)
-    @factor.register('multiply')
-    @_formatting
-    def __multiply(self, *args, how, factor, **kwargs): 
-        return self.transformation(*args, method='factor', how='multiply', factor=factor, **kwargs)
-    @factor.register('divide')
-    @_formatting
-    def __divide(self, *args, how, factor, **kwargs): 
-        return self.transformation(*args, method='factor', how='divide', factor=factor, **kwargs)
-
     @classmethod
     def fromfile(cls, *args, databasis={}, **kwargs):
         assert isinstance(databasis, dict)
@@ -218,6 +227,8 @@ class RangeSpec:
         return [num * self.multiplier.num if num is not None else None for num in nums]
    
     # TRANSFORMATIONS    
+    def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
+    
     @keydispatcher('how')
     def consolidate(self, *args, how, **kwargs): raise KeyError(how)
     
@@ -236,7 +247,7 @@ class RangeSpec:
     def __differential(self, *args, how, **kwargs):
         return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
 
-    def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
+    
 
 
 

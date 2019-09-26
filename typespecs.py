@@ -6,7 +6,9 @@ Created on Fri Apr 12 2018
 
 """
 
-from specs.spec import Spec, SpecStringError, SpecValueError
+from utilities.dispatchers import clskey_singledispatcher as keydispatcher
+
+from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -42,14 +44,34 @@ class CategorySpec:
     def todict(self): return dict(super().todict(), categories=self.categories)
     
     # OPERATIONS
-    def add(self, other, *args, **kwargs): return self.operation(other, *args, method='add', **kwargs)
-    def subtract(self, other, *args, **kwargs): return self.operation(other, *args, method='subtract', **kwargs)
+    def add(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        return self.operation(other, *args, method='add', **kwargs)
+    
+    def subtract(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        return self.operation(other, *args, method='subtract', **kwargs)
     
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
         assert isinstance(databasis, (tuple, list, set))
         assert len(set(databasis)) == len(databasis)
         return cls(*args, categories=set(databasis), **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

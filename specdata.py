@@ -16,31 +16,29 @@ __license__ = ""
 _FORMATTING = '/*+-_ |'
 
 
-OPERATIONS = dict(multiply = '{data}*{other}', 
-                  divide = '{data}/{other}')
-
-TRANSFORMATIONS = {'factor': dict(multiply = '{factor}*{data}', 
-                                  divide = '{factor}/{data}'),
-                   'scale': dict(normalize = '{axis}|Quantiles|{data}', 
-                                 standardize = '{axis}|ZScores|{data}', 
-                                 minmax = '{axis}|MinMax|{data}'), 
-                   'moving': dict(average = '{period}MAvg|{data}', 
-                                  total = '{period}MTotal|{data}', 
-                                  bracket = '{period}MRange|{data}', 
-                                  differential='MDiff|{data}'),
-                   'consolidate': dict(average = '{weight}Avg|{data}', 
-                                       cumulate = '{direction}Cum|{data}',
-                                       differential = 'Diff|{data}'), 
-                   'unconsolidate': dict(cumulate = '{direction}UnCum|{data}', 
-                                         group = 'Bins|{data}'),
-                   'reduction': dict(summation = 'Sum|{data}', 
-                                     average = 'Avg|{data}', 
-                                     stdev = 'Stdev|{data}', 
-                                     minimum = 'Min|{data}', 
-                                     maximum = 'Max|{data}'),
-                   'wtreduction':dict(average = '{axis}|WtAvg|{data}',
-                                      stdev = '{axis}|WtStdev|{data}',
-                                      median = '{axis}|WtMed|{data}')}
+OPERATIONS = {'multiply':'{data}*{other}', 
+              'divide'  :'{data}/{other}'}
+TRANSFORMATIONS = {'factor'       :{'multiply'    :'{factor}*{data}', 
+                                    'divide'      :'{factor}/{data}'},
+                   'scale'        :{'normalize'   :'{axis}|Quantiles|{data}', 
+                                    'standardize' :'{axis}|ZScores|{data}', 
+                                    'minmax'      :'{axis}|MinMax|{data}'}, 
+                   'moving'       :{'average'     :'{period}MAvg|{data}', 
+                                    'summation'   :'{period}MSum|{data}',
+                                    'couple'      :'{period}MGrp|{data}'},
+                   'consolidate'  :{'average'     :'{weight}Avg|{data}', 
+                                    'cumulate'    :'{direction}Cum|{data}',
+                                    'differential':'Diff|{data}'}, 
+                   'unconsolidate':{'cumulate'    :'{direction}UnCum|{data}', 
+                                    'couple'      :'Coupled|{data}'},
+                   'reduction'    :{'summation'   :'Sum|{data}', 
+                                    'average'     :'Avg|{data}', 
+                                    'stdev'       :'Stdev|{data}', 
+                                    'minimum'     :'Min|{data}', 
+                                    'maximum'     :'Max|{data}'},
+                   'wtreduction'  :{'average'     :'{axis}|WtAvg|{data}',
+                                    'stdev'       :'{axis}|WtStdev|{data}',
+                                    'median'      :'{axis}|WtMed|{data}'}}
 
 
 def data_operation(data, other, *args, method, **kwargs):
