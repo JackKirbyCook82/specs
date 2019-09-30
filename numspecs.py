@@ -126,6 +126,7 @@ class NumSpec:
 
     @_formatting
     def multiply(self, other, *args, **kwargs): 
+        if isinstance(other, Number): return self.transformation(other, *args, method='factor', how='multiply', factor=other, **kwargs)
         if other.datatype != 'num': raise SpecOperationNotSupportedError(self, other, 'multiply') 
         heading = kwargs.get('heading', self.heading * other.heading)   
         unit = self.unit * other.unit                    
@@ -133,6 +134,7 @@ class NumSpec:
         
     @_formatting
     def divide(self, other, *args, **kwargs): 
+        if isinstance(other, Number): return self.transformation(*args, method='factor', how='divide', factor=other, **kwargs)
         if other.datatype != 'num': raise SpecOperationNotSupportedError(self, other, 'divide') 
         heading = kwargs.get('heading', self.heading / other.heading)
         unit = self.unit / other.unit             
