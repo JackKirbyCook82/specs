@@ -31,8 +31,7 @@ TRANSFORMATIONS = {'factor'       :{'multiply'    :'{factor}*{data}',
                                     'differential':'Diff|{data}'}, 
                    'unconsolidate':{'cumulate'    :'{direction}UnCum|{data}', 
                                     'couple'      :'Coupled|{data}'},
-                   'reduction'    :{'summation'   :'Sum|{data}', 
-                                    'average'     :'Avg|{data}', 
+                   'reduction'    :{'average'     :'Avg|{data}', 
                                     'stdev'       :'Stdev|{data}', 
                                     'minimum'     :'Min|{data}', 
                                     'maximum'     :'Max|{data}'},
@@ -52,8 +51,8 @@ def data_operation(data, other, *args, method, **kwargs):
 
 
 def data_transformation(data, *args, method, how, **kwargs):
-    if method not in TRANSFORMATIONS.keys():
-        return data
+    if method not in TRANSFORMATIONS.keys(): return data
+    if how not in TRANSFORMATIONS[method].keys(): return data
     if any([opchar in data for opchar in _FORMATTING]): data = '({})'.format(data)
     modifydata = TRANSFORMATIONS[method][how].format(data=data, **kwargs)
     return modifydata
