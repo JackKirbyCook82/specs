@@ -6,8 +6,6 @@ Created on Fri Apr 12 2018
 
 """
 
-from utilities.dispatchers import clskey_singledispatcher as keydispatcher
-
 from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
@@ -41,7 +39,7 @@ class CategorySpec:
     def asval(self, string): return string.split(_DELIMITER)
 
     def __eq__(self, other): return self.categories == other.categories        
-    def todict(self): return dict(super().todict(), categories=self.categories)
+    def todict(self): return dict(super().todict(), categories=list(self.categories))
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): 

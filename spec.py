@@ -47,7 +47,7 @@ class Spec(ABC):
     def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])
     
     @property
-    def jsonstr(self): return json.dumps({key:str(value) for key, value in self.todict().items()}, sort_keys=True, indent=3, separators=(',', ' : '))  
+    def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '), default=str)  
     def todict(self): return dict(data=self.data, datatype=self.datatype)
     def __init__(self, *args, data, **kwargs): self.__data = data
     
