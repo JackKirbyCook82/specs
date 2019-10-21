@@ -15,6 +15,7 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
+_ALL = '*'
 _DELIMITER = '|'
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
@@ -35,8 +36,12 @@ class CategorySpec:
     def checkval(self, value):  
         if not all([item in self.__categories for item in value]): raise SpecValueError(self, _aslist(value))
     
-    def asstr(self, value): return _DELIMITER.join(value)
-    def asval(self, string): return string.split(_DELIMITER)
+    def asstr(self, value): 
+        if set(value) == self.categories: return _ALL
+        else: return _DELIMITER.join(value)
+    def asval(self, string): 
+        if string == _ALL: return list(self.categories)
+        else: return string.split(_DELIMITER)
 
     def __eq__(self, other): return self.categories == other.categories        
     def todict(self): return dict(super().todict(), categories=list(self.categories))

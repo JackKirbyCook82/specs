@@ -10,7 +10,7 @@ import re
 from numbers import Number
 from functools import update_wrapper
 
-from utilities.quantities import Multiplier, Unit, Heading
+from utilities.quantities import Multiplier, Unit, Heading, MULTIPLIERS
 from utilities.dispatchers import clskey_singledispatcher as keydispatcher
 
 from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
@@ -36,14 +36,13 @@ _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else lis
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
 
 
-def _numfromstr(numstr): 
-    nums = re.findall(r"[-+]?\d*\.\d+|\d+", numstr)
-    if len(nums) == 0: 
-        yield None
-    elif len(nums) == 1: 
-        yield _fixnumtype(nums[0])
-    else: 
-        for num in nums: yield _fixnumtype(num)
+def _numfromstr(numstr):
+    try: items, unit = numstr.split(' ')
+    except: items, unit = numstr, ''
+    try: num = re.findall(r"[-+]?\d*\.\d+|\d+", items)[0]
+    except TypeError: return None
+    pre, multiplier = items.split(num)
+    return _fixnumtype(num) * MULTIPLIERS[multiplier]
 
 def _numformatting(num, *args, precision, nummultiplier, **kwargs):
     assert isinstance(num, Number)
@@ -106,8 +105,7 @@ class NumSpec:
    
     def asval(self, string): 
         self.checkstr(string)
-        num = [num for num in _numfromstr(string)][0]
-        return num * self.multiplier.num if num is not None else None
+        return _numfromstr(string)
 
     def __eq__(self, other): 
         assert type(self) == type(other)
@@ -219,14 +217,14 @@ class RangeSpec:
     
     def asval(self, string):
         self.checkstr(string)
-        nums = [num for num in _numfromstr(string)]
+        nums = [_numfromstr(numstr) for numstr in string.split(_DELIMITER)]        
         if _DIRECTIONS['upper'] in string: nums = [*nums, None]
         elif _DIRECTIONS['lower'] in string: nums = [None, *nums]
-        elif _DIRECTIONS['unbounded'] in string: nums = [None, None]
+        elif _DIRECTIONS['unbounded'] in string: nums = [None, None]        
         if len(nums) == 1: nums = [*nums, *nums]
         assert len(nums) == 2
         if None not in nums: nums = [min(nums), max(nums)]
-        return [num * self.multiplier.num if num is not None else None for num in nums]
+        return nums
    
     # TRANSFORMATIONS    
     def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
