@@ -6,7 +6,7 @@ Created on Fri Apr 12 2018
 
 """
 
-from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
+from specs.spec import Spec, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -31,15 +31,13 @@ class CategorySpec:
         self.__categories = set(categories)  
         super().__init__(*args, **kwargs)
 
-    def checkstr(self, string): 
-        if not bool(string): raise SpecStringError(self, string)
-    def checkval(self, value):  
-        if not all([item in self.__categories for item in value]): raise SpecValueError(self, _aslist(value))
-    
     def asstr(self, value): 
+        assert all([item in self.__categories for item in value])
         if set(value) == self.categories: return _ALL
         else: return _DELIMITER.join(value)
+        
     def asval(self, string): 
+        assert string
         if string == _ALL: return list(self.categories)
         else: return string.split(_DELIMITER)
 

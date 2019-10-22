@@ -7,13 +7,14 @@ Created on Fri Apr 12 2018
 """
 
 import re
+import numpy as np
 from numbers import Number
 from functools import update_wrapper
 
 from utilities.quantities import Multiplier, Unit, Heading, MULTIPLIERS
 from utilities.dispatchers import clskey_singledispatcher as keydispatcher
 
-from specs.spec import Spec, SpecStringError, SpecValueError, SpecOperationNotSupportedError
+from specs.spec import Spec, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -39,10 +40,12 @@ _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(f
 def _numfromstr(numstr):
     try: items, unit = numstr.split(' ')
     except: items, unit = numstr, ''
-    try: num = re.findall(r"[-+]?\d*\.\d+|\d+", items)[0]
-    except TypeError: return None
-    pre, multiplier = items.split(num)
-    return _fixnumtype(num) * MULTIPLIERS[multiplier]
+    nums = re.findall(r"[-+]?\d*\.\d+|\d+", items)
+    if len(nums) == 0: return np.NaN
+    elif len(nums) == 1:
+        pre, multiplier = items.split(nums[0])
+        return _fixnumtype(nums[0]) * MULTIPLIERS[multiplier]
+    else: raise ValueError(nums)
 
 def _numformatting(num, *args, precision, nummultiplier, **kwargs):
     assert isinstance(num, Number)
@@ -92,19 +95,11 @@ class NumSpec:
         self.__precision = int(precision)
         self.__numdirection = numdirection             
         super().__init__(*args, **kwargs)
-        
-    def checkstr(self, string):
-        if not len(re.findall(r"[-+]?\d*\.\d+|\d+", string)) == 1 and not _ALL in string: raise SpecStringError(self, string)
-    
-    def checkval(self, value): 
-        if not isinstance(value, Number): raise SpecValueError(self, value)
-    
+
     def asstr(self, value): 
-        self.checkval(value)
         return _numstrformatting(value, **self.todict())     
    
     def asval(self, string): 
-        self.checkstr(string)
         return _numfromstr(string)
 
     def __eq__(self, other): 
@@ -199,16 +194,6 @@ class RangeSpec:
         elif lowernum == uppernum: return 'state'
         else: return 'center' 
 
-    def checkstr(self, string): 
-        if not bool(string): raise SpecStringError(self, string)
-    
-    def checkval(self, value): 
-        if not isinstance(value, list): raise SpecValueError(self, value)
-        if not len(value) == 2: raise SpecValueError(self, value)
-        if not all([isinstance(num, (Number, type(None))) for num in value]): raise SpecValueError(self, value) 
-        if None not in value: 
-            if value[0] > value[-1]: raise SpecValueError(self, value)
-    
     def asstr(self, value):   
         self.checkval(value)
         if self.direction(value) == 'state': rangestr = _numstrformatting(value[0], **self.todict())    

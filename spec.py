@@ -16,15 +16,10 @@ from specs.specdata import data_operation, data_transformation
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['Spec', 'SpecStringError', 'SpecValueError', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
+__all__ = ['Spec', 'SpecOperationNotSupportedError', 'SpecTransformationNotSupportedError']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
-
-class SpecStringError(Exception): 
-    def __init__(self, spec, string): super().__init__('{}({})'.format(spec.__class__.__name__, string))
-class SpecValueError(Exception): 
-    def __init__(self, spec, value): super().__init__('{}({})'.format(spec.__class__.__name__, value))
 
 class SpecOperationNotSupportedError(Exception): 
     def __init__(self, spec, other, operation): super().__init__('{}.{}({})'.format(repr(spec), operation, repr(other)))
@@ -61,10 +56,6 @@ class Spec(ABC):
     def asstr(value): pass
     @abstractmethod
     def asval(string): pass
-    @abstractmethod
-    def checkstr(string): pass
-    @abstractmethod
-    def checkval(value): pass
     @abstractmethod
     def __eq__(self, other): pass
 
