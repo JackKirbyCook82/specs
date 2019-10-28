@@ -87,6 +87,9 @@ class NumSpec:
     @property
     def precision(self): return self.__precision
     
+    @property
+    def threshold(self): return ((1/10)**self.precision) * self.multiplier.num
+    
     def __init__(self, *args, numdirection, heading, precision, multiplier, unit, **kwargs): 
         assert numdirection in _NUMDIRECTIONS.keys()    
         self.__heading = heading if isinstance(heading, Heading) else Heading.fromstr(str(heading)) 
@@ -96,11 +99,8 @@ class NumSpec:
         self.__numdirection = numdirection             
         super().__init__(*args, **kwargs)
 
-    def asstr(self, value): 
-        return _numstrformatting(value, **self.todict())     
-   
-    def asval(self, string): 
-        return _numfromstr(string)
+    def asstr(self, value): return _numstrformatting(value, **self.todict())       
+    def asval(self, string): return _numfromstr(string)
 
     def __eq__(self, other): 
         assert type(self) == type(other)
@@ -186,7 +186,6 @@ class NumSpec:
 @NumSpec.register('range')
 class RangeSpec:
     def direction(self, value):
-        self.checkval(value)
         lowernum, uppernum = value
         if all([x is None for x in value]): return 'unbounded'
         elif lowernum is None: return 'lower'
@@ -195,13 +194,11 @@ class RangeSpec:
         else: return 'center' 
 
     def asstr(self, value):   
-        self.checkval(value)
         if self.direction(value) == 'state': rangestr = _numstrformatting(value[0], **self.todict())    
         else: rangestr = _DELIMITER.join([_numstrformatting(num, **self.todict()) for num in value if num is not None])   
         return _DIRECTIONS[self.direction(value)] + rangestr
     
     def asval(self, string):
-        self.checkstr(string)
         nums = [_numfromstr(numstr) for numstr in string.split(_DELIMITER)]        
         if _DIRECTIONS['upper'] in string: nums = [*nums, None]
         elif _DIRECTIONS['lower'] in string: nums = [None, *nums]
