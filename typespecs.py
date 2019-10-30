@@ -52,7 +52,7 @@ class CategorySpec:
     def subtract(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
         return self.operation(other, *args, method='subtract', **kwargs)
-    
+
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
         assert isinstance(databasis, (tuple, list, set))
