@@ -38,11 +38,11 @@ class CategorySpec:
         
     def asval(self, string): 
         assert string
-        if string == _ALL: return list(self.categories)
+        if string == _ALL: return self.categories
         else: return string.split(_DELIMITER)
 
     def __eq__(self, other): return self.categories == other.categories        
-    def todict(self): return dict(super().todict(), categories=list(self.categories))
+    def todict(self): return dict(super().todict(), categories=self.categories)
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
@@ -52,6 +52,10 @@ class CategorySpec:
     def subtract(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
         return self.operation(other, *args, method='subtract', **kwargs)
+    
+    def divide(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'divide') 
+        return self.operation(other, *args, method='divide', **kwargs)
 
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
