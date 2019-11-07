@@ -32,9 +32,9 @@ class CategorySpec:
         super().__init__(*args, **kwargs)
 
     def asstr(self, value): 
-        assert all([item in self.__categories for item in value])
-        if set(value) == self.categories: return _ALL
-        else: return _DELIMITER.join(value)
+        assert all([item in self.__categories for item in _aslist(value)])
+        if set(_aslist(value)) == self.categories: return _ALL
+        else: return _DELIMITER.join(_aslist(value))
         
     def asval(self, string): 
         assert string
@@ -42,7 +42,7 @@ class CategorySpec:
         else: return string.split(_DELIMITER)
 
     def __eq__(self, other): return self.categories == other.categories        
-    def todict(self): return dict(super().todict(), categories=self.categories)
+    def todict(self): return dict(super().todict(), categories=list(self.categories))
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
