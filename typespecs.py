@@ -23,6 +23,9 @@ _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) els
 
 @Spec.register('category')
 class CategorySpec:
+    def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
+    def __eq__(self, other): return set(self.categories) == set(other.categories)  
+    
     @property
     def categories(self): return self.__categories
     
@@ -41,9 +44,6 @@ class CategorySpec:
         if string == _ALL: return self.categories
         else: return string.split(_DELIMITER)
 
-    def __eq__(self, other): return self.categories == other.categories        
-    def todict(self): return dict(super().todict(), categories=list(self.categories))
-    
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 

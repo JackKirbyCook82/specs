@@ -28,6 +28,7 @@ class SpecTransformationNotSupportedError(Exception):
     
     
 class Spec(ABC):
+    def __init__(self, *args, data, **kwargs): self.__data = data
     def __new__(cls, *args, **kwargs):
         if cls == Spec: return cls.getsubclass(kwargs['datatype'].lower())(*args, **kwargs)
         else:
@@ -41,10 +42,10 @@ class Spec(ABC):
     @property
     def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])
     
-    @property
     def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '), default=str)  
-    def todict(self): return dict(data=self.data, datatype=self.datatype)
-    def __init__(self, *args, data, **kwargs): self.__data = data
+    def __str__(self): return self.jsonstr()
+    def __hash__(self): return hash(str(self))
+    def todict(self): return dict(data=self.data, datatype=self.datatype)    
     
     def __add__(self, other): return self.add(other)
     def __sub__(self, other): return self.subtract(other)
