@@ -24,8 +24,8 @@ __license__ = ""
 
 
 _INF = '∞'
-_ALL = '*'
 _DELIMITER = '|'
+_ALL = _DELIMITER.join(['-'+_INF, _INF])
 
 _NUMFORMAT = 'num:.{precision}f'
 _NUMSTRFORMAT = '{numdirection}{heading}{numstr}{multiplier}{unit}'

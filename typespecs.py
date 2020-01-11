@@ -36,8 +36,7 @@ class CategorySpec:
 
     def asstr(self, value): 
         assert all([item in self.__categories for item in _aslist(value)])
-        if set(_aslist(value)) == self.categories: return _ALL
-        else: return _DELIMITER.join(_aslist(value))
+        return _DELIMITER.join(_aslist(value))
         
     def asval(self, string): 
         assert string
