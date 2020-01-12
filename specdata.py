@@ -14,30 +14,31 @@ __license__ = ""
 
 
 _FORMATTING = '/*+-_ |'
+_ALLAXIS = ''
 
 
 OPERATIONS = {'multiply':'{data}*{other}', 
               'divide'  :'{data}/{other}'}
 TRANSFORMATIONS = {'factor'       :{'multiply'    :'{factor}*{data}', 
                                     'divide'      :'{factor}/{data}'},
-                   'scale'        :{'normalize'   :'{axis}|Quantiles|{data}', 
-                                    'standardize' :'{axis}|ZScores|{data}', 
-                                    'minmax'      :'MinMax|{data}'}, 
-                   'moving'       :{'average'     :'{period}MAvg|{data}', 
-                                    'summation'   :'{period}MSum|{data}',
-                                    'couple'      :'{period}MGrp|{data}'},
-                   'consolidate'  :{'average'     :'{weight}Avg|{data}', 
-                                    'cumulate'    :'{direction}Cum|{data}',
-                                    'differential':'Diff|{data}'}, 
-                   'unconsolidate':{'cumulate'    :'{direction}UnCum|{data}', 
-                                    'couple'      :'Coupled|{data}'},
-                   'reduction'    :{'average'     :'Avg|{data}', 
-                                    'stdev'       :'Stdev|{data}', 
-                                    'minimum'     :'Min|{data}', 
-                                    'maximum'     :'Max|{data}'},
-                   'wtreduction'  :{'average'     :'{axis}|WtAvg|{data}',
-                                    'stdev'       :'{axis}|WtStdev|{data}',
-                                    'median'      :'{axis}|WtMed|{data}'}}
+                   'scale'        :{'normalize'   :'{axis}|quantiles|{data}', 
+                                    'standardize' :'{axis}|zscores|{data}', 
+                                    'minmax'      :'{axis}|minmax|{data}'}, 
+                   'moving'       :{'average'     :'{period}mavg|{data}', 
+                                    'summation'   :'{period}msum|{data}',
+                                    'couple'      :'{period}mgrp|{data}'},
+                   'consolidate'  :{'average'     :'{weight}avg|{data}', 
+                                    'cumulate'    :'{direction}cum|{data}',
+                                    'differential':'diff|{data}'}, 
+                   'unconsolidate':{'cumulate'    :'{direction}uncum|{data}', 
+                                    'couple'      :'coupled|{data}'},
+                   'reduction'    :{'average'     :'avg|{data}', 
+                                    'stdev'       :'stdev|{data}', 
+                                    'minimum'     :'min|{data}', 
+                                    'maximum'     :'max|{data}'},
+                   'wtreduction'  :{'average'     :'{axis}|wtavg|{data}',
+                                    'stdev'       :'{axis}|wtstdev|{data}',
+                                    'median'      :'{axis}|wtmid|{data}'}}
 
 
 def data_operation(data, other, *args, method, **kwargs):
@@ -50,11 +51,11 @@ def data_operation(data, other, *args, method, **kwargs):
     return modifydata
 
 
-def data_transformation(data, *args, method, how, **kwargs):
+def data_transformation(data, *args, method, how, axis=None, **kwargs):
     if method not in TRANSFORMATIONS.keys(): return data
     if how not in TRANSFORMATIONS[method].keys(): return data
     if any([opchar in data for opchar in _FORMATTING]): data = '({})'.format(data)
-    modifydata = TRANSFORMATIONS[method][how].format(data=data, **kwargs)
+    modifydata = TRANSFORMATIONS[method][how].format(data=data, axis=axis if axis else _ALLAXIS, **kwargs)
     return modifydata
 
 
