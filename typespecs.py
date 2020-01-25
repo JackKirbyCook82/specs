@@ -39,7 +39,7 @@ class CategorySpec:
         return _DELIMITER.join(_aslist(value))
         
     def asval(self, string): 
-        assert string
+        assert isinstance(string, str)
         if string == _ALL: return self.categories
         else: return string.split(_DELIMITER)
 
