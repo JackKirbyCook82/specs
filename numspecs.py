@@ -179,7 +179,7 @@ class NumSpec:
         assert isinstance(databasis, dict)
         formatting = {key:databasis.pop(key, value) for key, value in _DEFAULTS.items()}
         return cls(*args, **formatting, **kwargs)
-        
+ 
    
 @NumSpec.register('range')
 class RangeSpec:
@@ -228,11 +228,6 @@ class RangeSpec:
         return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
 
     
-
-
-
-
-
 
 
 

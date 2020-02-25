@@ -49,12 +49,16 @@ class CategorySpec:
         return self.operation(other, *args, method='add', **kwargs)
     
     def subtract(self, other, *args, **kwargs): 
-        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract') 
         return self.operation(other, *args, method='subtract', **kwargs)
     
     def divide(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'divide') 
         return self.operation(other, *args, method='divide', **kwargs)
+
+    def couple(self, other, *args, **kwargs):
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'couple')  
+        return self.operation(other, *args, method='couple', **kwargs)
 
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
@@ -63,13 +67,20 @@ class CategorySpec:
         return cls(*args, categories=set(databasis), **kwargs)
 
 
+@CategorySpec.register('histogram')
+class HistogramSpec:
+    def asstr(self, value): 
+        assert all([key in self.__categories for key in value.keys()])
+        return _DELIMITER.join(['{key}={value}'.format(key=key, value=value) for key, value in self.items()])
+                
+    def asval(self, string):
+        assert isinstance(string, str)
+        items = {item.split('=')[0]:item.split[1] for item in string.split(_DELIMITER)}
+        return {category:items.get(category, 0) for category in self.__categories}
 
-
-
-
-
-
-
+    # OPERATIONS
+    def divide(self, other, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'divide'))
+    def couple(self, other, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'couple'))
 
 
 
