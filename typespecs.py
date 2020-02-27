@@ -10,25 +10,24 @@ from specs.spec import Spec, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = ['CategorySpec']
+__all__ = ['CategorySpec', 'HistogramSpec']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-_ALL = '*'
-_DELIMITER = '|'
+ALL = '*'
+DELIMITER = '|'
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
 
 
 @Spec.register('category')
 class CategorySpec:
+    @property
+    def categories(self): return self.__categories    
     def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
     def __eq__(self, other): return set(self.categories) == set(other.categories)  
-    
-    @property
-    def categories(self): return self.__categories
-    
+       
     def __init__(self, *args, categories, **kwargs): 
         assert isinstance(categories, (tuple, list, set))
         self.__categories = set(categories)  
@@ -36,12 +35,18 @@ class CategorySpec:
 
     def asstr(self, value): 
         assert all([item in self.__categories for item in _aslist(value)])
-        return _DELIMITER.join(_aslist(value))
+        return DELIMITER.join(_aslist(value))
         
     def asval(self, string): 
         assert isinstance(string, str)
-        if string == _ALL: return self.categories
-        else: return string.split(_DELIMITER)
+        if string == ALL: return self.categories
+        else: return string.split(DELIMITER)
+
+    @classmethod
+    def fromfile(cls, *args, databasis=[], **kwargs):
+        assert isinstance(databasis, (tuple, list, set))
+        assert len(set(databasis)) == len(databasis)
+        return cls(*args, categories=set(databasis), **kwargs)
 
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
@@ -60,22 +65,16 @@ class CategorySpec:
         if other != self: raise SpecOperationNotSupportedError(self, other, 'couple')  
         return self.operation(other, *args, method='couple', **kwargs)
 
-    @classmethod
-    def fromfile(cls, *args, databasis=[], **kwargs):
-        assert isinstance(databasis, (tuple, list, set))
-        assert len(set(databasis)) == len(databasis)
-        return cls(*args, categories=set(databasis), **kwargs)
-
 
 @CategorySpec.register('histogram')
 class HistogramSpec:
     def asstr(self, value): 
         assert all([key in self.__categories for key in value.keys()])
-        return _DELIMITER.join(['{key}={value}'.format(key=key, value=value) for key, value in self.items()])
+        return DELIMITER.join(['{key}={value}'.format(key=key, value=value) for key, value in self.items()])
                 
     def asval(self, string):
         assert isinstance(string, str)
-        items = {item.split('=')[0]:item.split[1] for item in string.split(_DELIMITER)}
+        items = {item.split('=')[0]:item.split[1] for item in string.split(DELIMITER)}
         return {category:items.get(category, 0) for category in self.__categories}
 
     # OPERATIONS

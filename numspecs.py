@@ -23,15 +23,15 @@ __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
 
-_INF = '∞'
-_DELIMITER = '|'
-_ALL = _DELIMITER.join(['-'+_INF, _INF])
+INFINITY = '∞'
+DELIMITER = '|'
+ALL = DELIMITER.join(['-'+INFINITY, INFINITY])
 
-_NUMFORMAT = 'num:.{precision}f'
-_NUMSTRFORMAT = '{numdirection}{heading}{numstr}{multiplier}{unit}'
-_DIRECTIONS = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':_ALL, 'center':''}
-_NUMDIRECTIONS = {'upper':'▲', 'lower':'▼', 'state':''}
-_DEFAULTS = {'numdirection':'state', 'heading':'', 'precision':0, 'unit':'', 'multiplier':''}
+NUMFORMAT = 'num:.{precision}f'
+NUMSTRFORMAT = '{numdirection}{heading}{numstr}{multiplier}{unit}'
+DIRECTIONS = {'upper':'>', 'lower':'<', 'state':'', 'unbounded':ALL, 'center':''}
+NUMDIRECTIONS = {'upper':'▲', 'lower':'▼', 'state':''}
+DEFAULTS = {'numdirection':'state', 'heading':'', 'precision':0, 'unit':'', 'multiplier':''}
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple)) else list(items)
 _fixnumtype = lambda num: None if num is None else int(float(num)) if not bool(float(num) % 1) else float(num)
@@ -51,19 +51,19 @@ def _numformatting(num, *args, precision, nummultiplier, **kwargs):
     assert isinstance(num, Number)
     assert isinstance(precision, int)
     assert isinstance(nummultiplier, Number)
-    numformat = '{' + _NUMFORMAT.format(precision=precision) + '}'
+    numformat = '{' + NUMFORMAT.format(precision=precision) + '}'
     return numformat.format(num=num/nummultiplier)
     
 def _numstrformatting(num, *args, heading, multiplier, unit, numdirection, **kwargs):
     assert isinstance(multiplier, Multiplier)
     assert isinstance(unit, Unit)
     assert isinstance(heading, Heading)
-    if num is None: return _ALL
+    if num is None: return ALL
     numstr = _numformatting(num, *args, nummultiplier=multiplier.num, **kwargs)
-    return _NUMSTRFORMAT.format(numstr=numstr, heading=str(heading), multiplier=str(multiplier), unit=str(unit), numdirection=_NUMDIRECTIONS[numdirection], **kwargs)
+    return NUMSTRFORMAT.format(numstr=numstr, heading=str(heading), multiplier=str(multiplier), unit=str(unit), numdirection=NUMDIRECTIONS[numdirection], **kwargs)
 
 def _rangestrformatting(lowernum, uppernum, *args, **kwargs):
-    return _DELIMITER.join([_numformatting(lowernum, *args, **kwargs), _numformatting(uppernum, *args, **kwargs)])
+    return DELIMITER.join([_numformatting(lowernum, *args, **kwargs), _numformatting(uppernum, *args, **kwargs)])
 
 
 def _formatting(function):
@@ -90,13 +90,12 @@ class NumSpec:
     @property
     def unit(self): return self.__unit
     @property
-    def precision(self): return self.__precision
-    
+    def precision(self): return self.__precision    
     @property
     def threshold(self): return ((1/10)**self.precision) * self.multiplier.num
     
     def __init__(self, *args, numdirection, heading, precision, multiplier, unit, **kwargs): 
-        assert numdirection in _NUMDIRECTIONS.keys()    
+        assert numdirection in NUMDIRECTIONS.keys()    
         self.__heading = heading if isinstance(heading, Heading) else Heading.fromstr(str(heading)) 
         self.__multiplier =  multiplier if isinstance(multiplier, Multiplier) else Multiplier.fromstr(str(multiplier)) 
         self.__unit = unit if isinstance(unit, Unit) else Unit.fromstr(str(unit)) 
@@ -106,6 +105,12 @@ class NumSpec:
 
     def asstr(self, value): return _numstrformatting(value, **self.todict())       
     def asval(self, string): return _numfromstr(string)
+
+    @classmethod
+    def fromfile(cls, *args, databasis={}, **kwargs):
+        assert isinstance(databasis, dict)
+        formatting = {key:databasis.pop(key, value) for key, value in DEFAULTS.items()}
+        return cls(*args, **formatting, **kwargs)
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
@@ -174,12 +179,6 @@ class NumSpec:
     def __unconsolidatecouple(self, other, *args, **kwargs): 
         return self.operation(other, *args, datatype='range', method='unconsolidate', how='couple', numdirection='state', **kwargs)
     
-    @classmethod
-    def fromfile(cls, *args, databasis={}, **kwargs):
-        assert isinstance(databasis, dict)
-        formatting = {key:databasis.pop(key, value) for key, value in _DEFAULTS.items()}
-        return cls(*args, **formatting, **kwargs)
- 
    
 @NumSpec.register('range')
 class RangeSpec:
@@ -193,14 +192,14 @@ class RangeSpec:
 
     def asstr(self, value):   
         if self.direction(value) == 'state': rangestr = _numstrformatting(value[0], **self.todict())    
-        else: rangestr = _DELIMITER.join([_numstrformatting(num, **self.todict()) for num in value if num is not None])   
-        return _DIRECTIONS[self.direction(value)] + rangestr
+        else: rangestr = DELIMITER.join([_numstrformatting(num, **self.todict()) for num in value if num is not None])   
+        return DIRECTIONS[self.direction(value)] + rangestr
     
     def asval(self, string):
-        nums = [_numfromstr(numstr) for numstr in string.split(_DELIMITER)]        
-        if _DIRECTIONS['upper'] in string: nums = [*nums, None]
-        elif _DIRECTIONS['lower'] in string: nums = [None, *nums]
-        elif _DIRECTIONS['unbounded'] in string: nums = [None, None]        
+        nums = [_numfromstr(numstr) for numstr in string.split(DELIMITER)]        
+        if DIRECTIONS['upper'] in string: nums = [*nums, None]
+        elif DIRECTIONS['lower'] in string: nums = [None, *nums]
+        elif DIRECTIONS['unbounded'] in string: nums = [None, None]        
         if len(nums) == 1: nums = [*nums, *nums]
         assert len(nums) == 2
         if None not in nums: nums = [min(nums), max(nums)]
@@ -210,19 +209,16 @@ class RangeSpec:
     def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
     
     @keyworddispatcher('how')
-    def consolidate(self, *args, how, **kwargs): raise KeyError(how)
-    
+    def consolidate(self, *args, how, **kwargs): raise KeyError(how)    
     @consolidate.register('average')
     def __average(self, *args, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
-        return self.transformation(*args, datatype='num', method='consolidate', how='average', weight='{:.0f}%'.format(weight * 100), **kwargs)    
-    
+        return self.transformation(*args, datatype='num', method='consolidate', how='average', weight='{:.0f}%'.format(weight * 100), **kwargs)        
     @consolidate.register('cumulate')
     def __cumulate(self, *args, direction, **kwargs): 
         assert direction == 'upper' or direction == 'lower'
         return self.transformation(*args, datatype='num', method='consolidate', how='cumulate', direction=direction, numdirection=direction, **kwargs)    
-
     @consolidate.register('differential')
     def __differential(self, *args, **kwargs):
         return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
