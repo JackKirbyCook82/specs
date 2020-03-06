@@ -14,9 +14,6 @@ __license__ = ""
 
 
 FORMATTING = '/*+-_ |'
-ALLAXIS = ''
-
-
 OPERATIONS = {
     'multiply':'{data}*{other}', 
     'divide':'{data}/{other}'}
@@ -64,7 +61,8 @@ def data_transformation(data, *args, method, how, axis=None, **kwargs):
     if method not in TRANSFORMATIONS.keys(): return data
     if how not in TRANSFORMATIONS[method].keys(): return data
     if any([opchar in data for opchar in FORMATTING]): data = '({})'.format(data)
-    modifydata = TRANSFORMATIONS[method][how].format(data=data, axis=axis if axis else ALLAXIS, **kwargs)
+    modifydata = TRANSFORMATIONS[method][how].format(data=data, axis=axis if axis else '', **kwargs)
+    if modifydata[0] in FORMATTING: modifydata = modifydata[1:]
     return modifydata
 
 

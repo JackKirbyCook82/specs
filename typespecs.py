@@ -6,6 +6,8 @@ Created on Fri Apr 12 2018
 
 """
 
+from utilities.dispatchers import keyword_singledispatcher as keyworddispatcher
+
 from specs.spec import Spec, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
@@ -17,6 +19,7 @@ __license__ = ""
 
 ALL = '*'
 DELIMITER = '|'
+ASSIGNMENT = '@'
 
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
 
@@ -66,24 +69,48 @@ class CategorySpec:
         return self.operation(other, *args, method='couple', **kwargs)
 
 
-@CategorySpec.register('histogram')
+@Spec.register('histogram')
 class HistogramSpec:
+    @property
+    def categories(self): return self.__categories
+    def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
+    def __eq__(self, other): return set(self.categories) == set(other.categories)   
+
+    def __init__(self, *args, categories, **kwargs): 
+        assert isinstance(categories, (tuple, list))
+        assert len(set(categories)) == len(categories)
+        self.__categories = tuple(categories)  
+        super().__init__(*args, **kwargs)
+    
     def asstr(self, value): 
         assert all([key in self.__categories for key in value.keys()])
-        return DELIMITER.join(['{key}={value}'.format(key=key, value=value) for key, value in self.items()])
+        return DELIMITER.join([ASSIGNMENT.join([key, value]) for key, value in self.items()])
                 
     def asval(self, string):
         assert isinstance(string, str)
         items = {item.split('=')[0]:item.split[1] for item in string.split(DELIMITER)}
         return {category:items.get(category, 0) for category in self.__categories}
 
+    @classmethod
+    def fromfile(cls, *args, databasis=[], **kwargs):
+        assert isinstance(databasis, (tuple, list))
+        return cls(*args, categories=databasis, **kwargs)
+
     # OPERATIONS
-    def divide(self, other, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'divide'))
-    def couple(self, other, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'couple'))
+    def add(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        return self.operation(other, *args, method='add', **kwargs)  
+    
+    def subtract(self, other, *args, **kwargs): 
+        if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract') 
+        return self.operation(other, *args, method='subtract', **kwargs)
 
-
-
-
+    # TRANSFORMATIONS        
+    @keyworddispatcher('how')
+    def scale(self, *args, how, **kwargs): raise KeyError(how)
+    @scale.register('normalize')
+    def __normalize(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='normalize', **kwargs)
+ 
 
 
 
