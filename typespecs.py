@@ -72,21 +72,19 @@ class HistogramSpec:
     @property
     def categories(self): return self.__categories
     @property
-    def index(self): return self.__index
+    def indexes(self): return self.__index
     @property
-    def function(self): return self.__function    
+    def function(self): return self.__function
     
-    def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
-    def __eq__(self, other): return set(self.categories) == set(other.categories)   
+    def todict(self): return dict(**super().todict(), function=self.fucntion, categories=list(set(self.categories)))    
+    def __eq__(self, other): return self.categories == other.categories 
 
-    def __init__(self, *args, categories, index=[], **kwargs): 
+    def __init__(self, *args, categories, **kwargs): 
         assert isinstance(categories, (tuple, list))
-        assert len(set(categories)) == len(categories)       
+        assert len(set(categories)) == len(categories)   
         self.__categories = tuple(categories) 
-        self.__index = index if index else tuple([i for i in range(len(categories))])
-        assert len(self.__categories) == len(self.__index)
-        function = lambda x, *args, **kwargs: self.__index[self.__categories.index(x)]
-        self.__function = kwargs.get('function', function)
+        self.__index = tuple([i for i in range(len(categories))])
+        self.__function = kwargs.get('function', lambda x, *args, **kwargs: self.__categories.index(x))   
         super().__init__(*args, **kwargs)
     
     def asstr(self, value): 
