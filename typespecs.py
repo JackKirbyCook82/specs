@@ -6,8 +6,6 @@ Created on Fri Apr 12 2018
 
 """
 
-from utilities.dispatchers import keyword_singledispatcher as keyworddispatcher
-
 from specs.spec import Spec, SpecOperationNotSupportedError
 
 __version__ = "1.0.0"
@@ -28,12 +26,12 @@ _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) els
 class CategorySpec:
     @property
     def categories(self): return self.__categories    
+    
     def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
     def __eq__(self, other): return set(self.categories) == set(other.categories)  
        
     def __init__(self, *args, categories, **kwargs): 
         assert isinstance(categories, (tuple, list, set))
-        self.__categories = set(categories)  
         super().__init__(*args, **kwargs)
 
     def asstr(self, value): 
@@ -73,13 +71,22 @@ class CategorySpec:
 class HistogramSpec:
     @property
     def categories(self): return self.__categories
+    @property
+    def index(self): return self.__index
+    @property
+    def function(self): return self.__function    
+    
     def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
     def __eq__(self, other): return set(self.categories) == set(other.categories)   
 
-    def __init__(self, *args, categories, **kwargs): 
+    def __init__(self, *args, categories, index=[], **kwargs): 
         assert isinstance(categories, (tuple, list))
-        assert len(set(categories)) == len(categories)
-        self.__categories = tuple(categories)  
+        assert len(set(categories)) == len(categories)       
+        self.__categories = tuple(categories) 
+        self.__index = index if index else tuple([i for i in range(len(categories))])
+        assert len(self.__categories) == len(self.__index)
+        function = lambda x, *args, **kwargs: self.__index[self.__categories.index(x)]
+        self.__function = kwargs.get('function', function)
         super().__init__(*args, **kwargs)
     
     def asstr(self, value): 
@@ -104,14 +111,6 @@ class HistogramSpec:
     def subtract(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract') 
         return self.operation(other, *args, method='subtract', **kwargs)
-
-    # TRANSFORMATIONS        
-    @keyworddispatcher('how')
-    def scale(self, *args, how, **kwargs): raise KeyError(how)
-    @scale.register('normalize')
-    def __normalize(self, *args, how, **kwargs): return self.transformation(*args, method='scale', how='normalize', **kwargs)
- 
-
 
 
 
