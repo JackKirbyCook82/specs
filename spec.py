@@ -9,7 +9,7 @@ Created on Fri Apr 12 2018
 import os.path
 from abc import ABC, abstractmethod
 import json
-
+import hashlib
 from utilities.strings import uppercase
 
 from specs.specdata import data_operation, data_transformation
@@ -41,10 +41,10 @@ class Spec(ABC):
     def dataname(self): return uppercase(self.__data, withops=True)
     @property
     def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])
-    
-    def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '), default=str)  
+        
     def __str__(self): return self.jsonstr()
-    def __hash__(self): return hash(str(self))
+    def __hash__(self): return hash(self.jsonstr())
+    def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '), default=str)  
     def todict(self): return dict(data=self.data, datatype=self.datatype)    
     
     def __add__(self, other): return self.add(other)
