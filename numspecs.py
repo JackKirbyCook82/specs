@@ -76,11 +76,12 @@ def _formatting(function):
 
 @Spec.register('num')
 class NumSpec:  
+    def __hash__(self): return hash(self.jsonstr())
     def todict(self): return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)    
     def __eq__(self, other): 
         assert type(self) == type(other)
         return self.unit == other.unit    
-    
+
     @property
     def heading(self): return self.__heading    
     @property
@@ -94,7 +95,7 @@ class NumSpec:
     @property
     def threshold(self): return ((1/10)**self.precision) * self.multiplier.num
     
-    def __init__(self, *args, numdirection, heading, precision, multiplier, unit, **kwargs): 
+    def __init__(self, *args, numdirection='state', heading='', precision, multiplier='', unit='', **kwargs): 
         assert numdirection in NUMDIRECTIONS.keys()    
         self.__heading = heading if isinstance(heading, Heading) else Heading.fromstr(str(heading)) 
         self.__multiplier =  multiplier if isinstance(multiplier, Multiplier) else Multiplier.fromstr(str(multiplier)) 
@@ -224,8 +225,6 @@ class RangeSpec:
         return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
 
     
-
-
 
 
 
