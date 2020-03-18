@@ -28,7 +28,8 @@ TRANSFORMATIONS = {
     'moving': {
         'average':'{period}mavg|{data}', 
         'summation':'{period}msum|{data}',
-        'couple':'{period}mgrp|{data}'},
+        'couple':'{period}mgrp|{data}',
+        'difference':'{period}mdiff|{data}'},
     'consolidate': {
         'average':'{weight}avg|{data}', 
         'cumulate':'{direction}cum|{data}',

@@ -154,30 +154,32 @@ class NumSpec:
     @keyworddispatcher('how')
     def moving(self, *args, how, **kwargs): raise KeyError(how)
     @moving.register('average')
-    def __average(self, *args, **kwargs): return self.transformation(*args, method='moving', how='average', numdirection='state', **kwargs)
+    def __average(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='average', numdirection='state', **kwargs)
     @moving.register('summation')
-    def __summation(self, *args, **kwargs): return self.transformation(*args, method='moving', how='summation', numdirection='state', **kwargs)
+    def __summation(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='summation', numdirection='state', **kwargs)
     @moving.register('couple')
-    def __movingcouple(self, *args, **kwargs): return self.transformation(*args, method='moving', how='couple', numdirection='state', **kwargs)
-    
+    def __movingcouple(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='couple', numdirection='state', **kwargs)
+    @moving.register('difference')
+    def __movingdifference(self, *args, how, **kwargs): return self.transformation(*args, method='moving', how='difference', numdirection='state', **kwargs)
+        
     @keyworddispatcher('how')
     def groupby(self, *args, how, **kwargs): raise KeyError(how)
     @groupby.register('bins')
-    def __bins(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='bins', **kwargs) 
+    def __bins(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='bins', **kwargs) 
     @groupby.register('bins')
-    def __overlaps(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='overlaps', **kwargs)  
+    def __overlaps(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='overlaps', **kwargs)  
     @groupby.register('bins')
-    def __contains(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='contains', **kwargs)      
+    def __contains(self, *args, how, **kwargs): return self.transformation(*args, datatype='range', method='groupby', how='contains', **kwargs)      
     
     @keyworddispatcher('how')
     def unconsolidate(self, *args, how, **kwargs): raise KeyError(how)
-    @unconsolidate.register('uncumulate')
-    def __uncumulate(self, *args, direction, **kwargs): 
+    @unconsolidate.register('cumulate')
+    def __cumulate(self, *args, how, direction, **kwargs): 
         assert direction == 'lower' or direction == 'upper'
         assert direction == self.numdirection
-        return self.transformation(*args, datatype='range', method='unconsolidate', how='uncumulate', numdirection='state', **kwargs)
+        return self.transformation(*args, datatype='range', method='unconsolidate', how='cumulate', direction=direction, numdirection='state', **kwargs)
     @unconsolidate.register('couple')
-    def __unconsolidatecouple(self, other, *args, **kwargs): 
+    def __couple(self, other, *args, how, **kwargs): 
         return self.operation(other, *args, datatype='range', method='unconsolidate', how='couple', numdirection='state', **kwargs)
     
    
@@ -212,16 +214,16 @@ class RangeSpec:
     @keyworddispatcher('how')
     def consolidate(self, *args, how, **kwargs): raise KeyError(how)    
     @consolidate.register('average')
-    def __average(self, *args, weight=0.5, **kwargs): 
+    def __average(self, *args, how, weight=0.5, **kwargs): 
         assert isinstance(weight, Number)
         assert all([weight <=1, weight >=0])
         return self.transformation(*args, datatype='num', method='consolidate', how='average', weight='{:.0f}%'.format(weight * 100), **kwargs)        
     @consolidate.register('cumulate')
-    def __cumulate(self, *args, direction, **kwargs): 
+    def __cumulate(self, *args, how, direction, **kwargs): 
         assert direction == 'upper' or direction == 'lower'
         return self.transformation(*args, datatype='num', method='consolidate', how='cumulate', direction=direction, numdirection=direction, **kwargs)    
     @consolidate.register('differential')
-    def __differential(self, *args, **kwargs):
+    def __differential(self, *args, how, **kwargs):
         return self.transformation(*args, datatype='num', method='consolidate', how='differential', **kwargs)
 
     
