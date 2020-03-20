@@ -28,12 +28,13 @@ class CategorySpec:
     def categories(self): return self.__categories
     
     def __hash__(self): return hash(self.jsonstr())
-    def todict(self): return dict(**super().todict(), categories=list(set(self.categories)))    
-    def __eq__(self, other): return set(self.categories) == set(other.categories)  
+    def todict(self): return dict(**super().todict(), categories=self.categories)    
+    def __eq__(self, other): return self.categories == other.categories  
        
     def __init__(self, *args, categories, **kwargs): 
-        assert isinstance(categories, (tuple, list, set))
-        self.__categories = set(categories) 
+        assert isinstance(categories, (tuple, list))
+        assert len(set(categories)) == len(categories)
+        self.__categories = categories
         super().__init__(*args, **kwargs)
 
     def asstr(self, value): 
@@ -47,9 +48,9 @@ class CategorySpec:
 
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
-        assert isinstance(databasis, (tuple, list, set))
+        assert isinstance(databasis, (tuple, list))
         assert len(set(databasis)) == len(databasis)
-        return cls(*args, categories=set(databasis), **kwargs)
+        return cls(*args, categories=databasis, **kwargs)
 
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
