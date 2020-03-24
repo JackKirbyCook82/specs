@@ -35,8 +35,7 @@ TRANSFORMATIONS = {
         'cumulate':'{direction}cum|{data}',
         'differential':'diff|{data}'}, 
     'unconsolidate': {
-        'cumulate':'{direction}uncum|{data}', 
-        'couple':'coupled|{data}'},
+        'cumulate':'{direction}uncum|{data}'},
     'reduction': {
         'average':'avg|{data}', 
         'stdev':'stdev|{data}', 

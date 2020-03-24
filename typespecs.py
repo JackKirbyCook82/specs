@@ -26,15 +26,18 @@ _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) els
 class CategorySpec:
     @property
     def categories(self): return self.__categories
+    @property
+    def indexes(self): return self.__indexes
     
     def __hash__(self): return hash(self.jsonstr())
-    def todict(self): return dict(**super().todict(), categories=self.categories)    
-    def __eq__(self, other): return self.categories == other.categories  
+    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)    
+    def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
        
-    def __init__(self, *args, categories, **kwargs): 
-        assert isinstance(categories, (tuple, list))
-        assert len(set(categories)) == len(categories)
-        self.__categories = categories
+    def __init__(self, *args, categories, indexes, **kwargs): 
+        assert isinstance(categories, (tuple, list)) and isinstance(indexes, (tuple, list))
+        assert len(set(categories)) == len(categories) == len(set(indexes)) == len(indexes) 
+        self.__categories = tuple(categories) 
+        self.__indexes = tuple([int(index) for index in indexes])
         super().__init__(*args, **kwargs)
 
     def asstr(self, value): 
@@ -49,8 +52,8 @@ class CategorySpec:
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
         assert isinstance(databasis, (tuple, list))
-        assert len(set(databasis)) == len(databasis)
-        return cls(*args, categories=databasis, **kwargs)
+        categories, indexes = databasis[0::2], databasis[1::2]
+        return cls(*args, categories=categories, indexes=indexes, **kwargs)
 
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
@@ -75,18 +78,17 @@ class HistogramSpec:
     @property
     def categories(self): return self.__categories
     @property
-    def index(self): return self.__index
+    def indexes(self): return self.__indexes
 
     def __hash__(self): return hash(self.jsonstr())    
-    def todict(self): return dict(**super().todict(), categories=self.categories, index=self.index)    
-    def __eq__(self, other): return all([self.categories == other.categories, self.index == other.index]) 
+    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)  
+    def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
 
-    def __init__(self, *args, categories, **kwargs): 
-        assert isinstance(categories, (tuple, list))
-        assert len(set(categories)) == len(categories)   
+    def __init__(self, *args, categories, indexes, **kwargs): 
+        assert isinstance(categories, (tuple, list)) and isinstance(indexes, (tuple, list))
+        assert len(set(categories)) == len(categories) == len(set(indexes)) == len(indexes)   
         self.__categories = tuple(categories) 
-        self.__index = kwargs.get('index', tuple([i for i in range(len(categories))]))
-        assert len(self.__categories) == len(self.__index)
+        self.__indexes = tuple([int(index) for index in indexes])
         super().__init__(*args, **kwargs)
     
     def asstr(self, value): 
@@ -101,7 +103,8 @@ class HistogramSpec:
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
         assert isinstance(databasis, (tuple, list))
-        return cls(*args, categories=databasis, **kwargs)
+        categories, indexes = databasis[0::2], databasis[1::2]
+        return cls(*args, categories=categories, indexes=indexes, **kwargs)
 
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
@@ -111,7 +114,6 @@ class HistogramSpec:
     def subtract(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract') 
         return self.operation(other, *args, method='subtract', **kwargs)
-
 
 
 

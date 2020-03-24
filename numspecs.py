@@ -78,10 +78,8 @@ def _formatting(function):
 class NumSpec:  
     def __hash__(self): return hash(self.jsonstr())
     def todict(self): return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)    
-    def __eq__(self, other): 
-        assert type(self) == type(other)
-        return self.unit == other.unit    
-
+    def __eq__(self, other): return self.unit == other.unit and self.data == other.data
+        
     @property
     def heading(self): return self.__heading    
     @property
@@ -115,10 +113,10 @@ class NumSpec:
     
     # OPERATIONS
     def add(self, other, *args, **kwargs): 
-        if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
+        if other != self or other.datatype != self.datatype: raise SpecOperationNotSupportedError(self, other, 'add') 
         return self.operation(other, *args, method='add', **kwargs)
     def subtract(self, other, *args, **kwargs): 
-        if other != self: raise SpecOperationNotSupportedError(self, other, 'subtract')         
+        if other != self or other.datatype != self.datatype: raise SpecOperationNotSupportedError(self, other, 'subtract')         
         return self.operation(other, *args, method='subtract', **kwargs)
 
     @_formatting
@@ -127,8 +125,7 @@ class NumSpec:
         if other.datatype != 'num': raise SpecOperationNotSupportedError(self, other, 'multiply') 
         heading = kwargs.get('heading', self.heading * other.heading)   
         unit = self.unit * other.unit                    
-        return self.operation(other, *args, method='multiply', heading=heading, unit=unit, **kwargs) 
-        
+        return self.operation(other, *args, method='multiply', heading=heading, unit=unit, **kwargs)         
     @_formatting
     def divide(self, other, *args, **kwargs): 
         if isinstance(other, Number): return self.transformation(*args, method='factor', how='divide', factor=other, **kwargs)
@@ -178,9 +175,6 @@ class NumSpec:
         assert direction == 'lower' or direction == 'upper'
         assert direction == self.numdirection
         return self.transformation(*args, datatype='range', method='unconsolidate', how='cumulate', direction=direction, numdirection='state', **kwargs)
-    @unconsolidate.register('couple')
-    def __couple(self, other, *args, how, **kwargs): 
-        return self.operation(other, *args, datatype='range', method='unconsolidate', how='couple', numdirection='state', **kwargs)
     
    
 @NumSpec.register('range')
