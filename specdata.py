@@ -6,6 +6,8 @@ Created on Fri Apr 12 2018
 
 """
 
+from parse import parse
+
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
 __all__ = ['data_operation', 'data_transformation']
@@ -14,6 +16,8 @@ __license__ = ""
 
 
 FORMATTING = '/*+-_ |'
+SIMPLIFY_FORMATTING = '{}/{}*{}'
+
 OPERATIONS = {
     'multiply':'{data}*{other}', 
     'divide':'{data}/{other}'}
@@ -47,13 +51,20 @@ TRANSFORMATIONS = {
         'median':'{axis}|wtmid|{data}'}}
 
 
-def data_operation(data, other, *args, method, **kwargs):
+def data_operation(data, other, *args, method, simplify=False, **kwargs):
     if method not in OPERATIONS.keys(): 
         assert data == other
         return data
+     
     if any([opchar in data for opchar in FORMATTING]): data = '({})'.format(data)  
     if any([opchar in data for opchar in FORMATTING]): other = '({})'.format(other)      
     modifydata = OPERATIONS[method].format(data=data, other=other) if method in OPERATIONS else data
+
+    if simplify:
+        unformated = parse(SIMPLIFY_FORMATTING, modifydata.replace('(', '').replace(')', ''))    
+        if unformated is not None: 
+            if len(set(unformated.fixed)) == 1: modifydata = unformated.fixed[0]       
+    
     return modifydata
 
 
