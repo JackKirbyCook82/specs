@@ -204,6 +204,9 @@ class RangeSpec:
    
     # TRANSFORMATIONS    
     def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))
+
+    def split(self, *args, **kwargs): return self.transformation(*args, datatype='range', method='split', **kwargs)
+    def expand(self, *args, **kwargs): return self.transformation(*args, datatype='num', method='expand', **kwargs)
     
     @keyworddispatcher('how')
     def consolidate(self, *args, how, **kwargs): raise KeyError(how)    

@@ -56,6 +56,8 @@ class CategorySpec:
         return cls(*args, categories=categories, indexes=indexes, **kwargs)
 
     # OPERATIONS
+    def expand(self, *args, **kwargs): return self.transformation(*args, method='expand', **kwargs)
+    
     def add(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
         return self.operation(other, *args, method='add', **kwargs)
