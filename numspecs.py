@@ -14,7 +14,7 @@ from functools import update_wrapper
 from utilities.quantities import Multiplier, Unit, Heading, MULTIPLIERS
 from utilities.dispatchers import keyword_singledispatcher as keyworddispatcher
 
-from specs.spec import Spec, SpecOperationNotSupportedError
+from specs.spec import Spec, SpecOperationNotSupportedError, SpecTransformationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -102,8 +102,8 @@ class NumSpec:
         self.__numdirection = numdirection             
         super().__init__(*args, **kwargs)
 
-    def asstr(self, value): return _numstrformatting(value, **self.todict())       
     def asval(self, string): return _numfromstr(string)
+    def asstr(self, value): return _numstrformatting(value, **self.todict())       
 
     @classmethod
     def fromfile(cls, *args, databasis={}, **kwargs):
@@ -187,11 +187,6 @@ class RangeSpec:
         elif lowernum == uppernum: return 'state'
         else: return 'center' 
 
-    def asstr(self, value):   
-        if self.direction(value) == 'state': rangestr = _numstrformatting(value[0], **self.todict())    
-        else: rangestr = DELIMITER.join([_numstrformatting(num, **self.todict()) for num in value if num is not None])   
-        return DIRECTIONS[self.direction(value)] + rangestr
-    
     def asval(self, string):
         nums = [_numfromstr(numstr) for numstr in string.split(DELIMITER)]        
         if DIRECTIONS['upper'] in string: nums = [*nums, None]
@@ -201,6 +196,11 @@ class RangeSpec:
         assert len(nums) == 2
         if None not in nums: nums = [min(nums), max(nums)]
         return nums
+
+    def asstr(self, value):   
+        if self.direction(value) == 'state': rangestr = _numstrformatting(value[0], **self.todict())    
+        else: rangestr = DELIMITER.join([_numstrformatting(num, **self.todict()) for num in value if num is not None])   
+        return DIRECTIONS[self.direction(value)] + rangestr
    
     # TRANSFORMATIONS    
     def unconsolidate(self, *args, **kwargs): raise NotImplementedError('{}.{}()'.format(self.__class__.__name__, 'unconsolidate'))

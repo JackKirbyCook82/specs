@@ -52,9 +52,9 @@ class Spec(ABC):
     
     # ABSTRACT INSTANCE METHODS    
     @abstractmethod
-    def asstr(value): pass
-    @abstractmethod
     def asval(string): pass
+    @abstractmethod
+    def asstr(value): pass
     @abstractmethod
     def __eq__(self, other): pass
     @abstractmethod

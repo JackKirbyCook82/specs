@@ -6,7 +6,7 @@ Created on Fri Apr 12 2018
 
 """
 
-from specs.spec import Spec, SpecOperationNotSupportedError
+from specs.spec import Spec, SpecOperationNotSupportedError, SpecTransformationNotSupportedError
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
@@ -30,8 +30,8 @@ class CategorySpec:
     def indexes(self): return self.__indexes
     
     def __hash__(self): return hash(self.jsonstr())
-    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)    
     def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
+    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)       
        
     def __init__(self, *args, categories, indexes, **kwargs): 
         assert isinstance(categories, (tuple, list)) and isinstance(indexes, (tuple, list))
@@ -40,15 +40,15 @@ class CategorySpec:
         self.__indexes = tuple([int(index) for index in indexes])
         super().__init__(*args, **kwargs)
 
+    def asval(self, string):
+        assert isinstance(string, str)
+        if string == ALL: return self.categories
+        else: return tuple(string.split(DELIMITER))        
+
     def asstr(self, value): 
         assert all([item in self.__categories for item in _aslist(value)])
         return DELIMITER.join(_aslist(value))
         
-    def asval(self, string): 
-        assert isinstance(string, str)
-        if string == ALL: return self.categories
-        else: return string.split(DELIMITER)
-
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
         assert isinstance(databasis, (tuple, list))
@@ -56,7 +56,8 @@ class CategorySpec:
         return cls(*args, categories=categories, indexes=indexes, **kwargs)
 
     # OPERATIONS
-    def expand(self, *args, **kwargs): return self.transformation(*args, method='expand', **kwargs)
+    def expand(self, *args, **kwargs):        
+        return self.transformation(*args, method='expand', **kwargs)
     
     def add(self, other, *args, **kwargs): 
         if other != self: raise SpecOperationNotSupportedError(self, other, 'add') 
@@ -83,9 +84,9 @@ class HistogramSpec:
     def indexes(self): return self.__indexes
 
     def __hash__(self): return hash(self.jsonstr())    
-    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)  
     def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
-
+    def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)  
+    
     def __init__(self, *args, categories, indexes, **kwargs): 
         assert isinstance(categories, (tuple, list)) and isinstance(indexes, (tuple, list))
         assert len(set(categories)) == len(categories) == len(set(indexes)) == len(indexes)   
@@ -93,14 +94,14 @@ class HistogramSpec:
         self.__indexes = tuple([int(index) for index in indexes])
         super().__init__(*args, **kwargs)
     
-    def asstr(self, value): 
-        assert all([key in self.__categories for key in value.keys()])
-        return DELIMITER.join([ASSIGNMENT.join([key, value]) for key, value in self.items()])
-                
     def asval(self, string):
         assert isinstance(string, str)
         items = {item.split('=')[0]:item.split[1] for item in string.split(DELIMITER)}
         return {category:items.get(category, 0) for category in self.__categories}
+    
+    def asstr(self, value): 
+        assert all([key in self.__categories for key in value.keys()])
+        return DELIMITER.join([ASSIGNMENT.join([key, value]) for key, value in self.items()])
 
     @classmethod
     def fromfile(cls, *args, databasis=[], **kwargs):
