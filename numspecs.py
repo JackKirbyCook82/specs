@@ -189,12 +189,12 @@ class RangeSpec:
 
     def asval(self, string):
         nums = [_numfromstr(numstr) for numstr in string.split(DELIMITER)]        
-        if DIRECTIONS['upper'] in string: nums = [*nums, None]
-        elif DIRECTIONS['lower'] in string: nums = [None, *nums]
-        elif DIRECTIONS['unbounded'] in string: nums = [None, None]        
-        if len(nums) == 1: nums = [*nums, *nums]
+        if DIRECTIONS['upper'] in string: nums = (*nums, None)
+        elif DIRECTIONS['lower'] in string: nums = (None, *nums)
+        elif DIRECTIONS['unbounded'] in string: nums = (None, None)        
+        if len(nums) == 1: nums = (*nums, *nums)
         assert len(nums) == 2
-        if None not in nums: nums = [min(nums), max(nums)]
+        if None not in nums: nums = (min(nums), max(nums))
         return nums
 
     def asstr(self, value):   
