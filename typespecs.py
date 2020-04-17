@@ -31,6 +31,9 @@ class CategorySpec:
     
     def __hash__(self): return hash(self.jsonstr())
     def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
+    
+    def category(self, index): return self.categories[self.indexes.index(index)]
+    def index(self, category): return self.indexes[self.categories.index(category)]
     def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)       
        
     def __init__(self, *args, categories, indexes, **kwargs): 
@@ -85,6 +88,9 @@ class HistogramSpec:
 
     def __hash__(self): return hash(self.jsonstr())    
     def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
+    
+    def category(self, index): return self.categories[self.indexes.index(index)]
+    def index(self, category): return self.indexes[self.categories.index(category)]
     def todict(self): return dict(**super().todict(), categories=self.categories, indexes=self.indexes)  
     
     def __init__(self, *args, categories, indexes, **kwargs): 

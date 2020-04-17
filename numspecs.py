@@ -77,7 +77,6 @@ def _formatting(function):
 @Spec.register('num')
 class NumSpec:  
     def __hash__(self): return hash(self.jsonstr())
-    def todict(self): return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)    
     def __eq__(self, other): return self.unit == other.unit and self.data == other.data
         
     @property
@@ -102,6 +101,7 @@ class NumSpec:
         self.__numdirection = numdirection             
         super().__init__(*args, **kwargs)
 
+    def todict(self): return dict(**super().todict(), multiplier=self.multiplier, unit=self.unit, heading=self.heading, precision=self.precision, numdirection=self.numdirection)  
     def asval(self, string): return _numfromstr(string)
     def asstr(self, value): return _numstrformatting(value, **self.todict())       
 
