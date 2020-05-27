@@ -29,8 +29,11 @@ class CategorySpec:
     @property
     def indexes(self): return self.__indexes
     
-    def __hash__(self): return hash(self.jsonstr())
-    def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
+    def __hash__(self): return hash((self.data, self.datatype, self.categories, self.indexes,))
+    def __eq__(self, other): 
+        if type(self) != type(other): raise TypeError(type(other))
+        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other))
+        return self.categories == other.categories and self.indexes == other.indexes 
     
     def category(self, index): return self.categories[self.indexes.index(index)]
     def index(self, category): return self.indexes[self.categories.index(category)]
@@ -86,8 +89,11 @@ class HistogramSpec:
     @property
     def indexes(self): return self.__indexes
 
-    def __hash__(self): return hash(self.jsonstr())    
-    def __eq__(self, other): return self.categories == other.categories and self.indexes == other.indexes 
+    def __hash__(self): return hash((self.data, self.datatype, self.categories, self.indexes,))
+    def __eq__(self, other): 
+        if type(self) != type(other): raise TypeError(type(other))
+        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other))
+        return self.categories == other.categories and self.indexes == other.indexes 
     
     def category(self, index): return self.categories[self.indexes.index(index)]
     def index(self, category): return self.indexes[self.categories.index(category)]

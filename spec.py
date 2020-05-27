@@ -39,9 +39,8 @@ class Spec(ABC):
     @property
     def dataname(self): return uppercase(self.__data, withops=True)
     @property
-    def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])
-        
-    def __str__(self): return self.jsonstr()
+    def name(self): return '_'.join([self.dataname, uppercase(self.datatype, withops=True), 'Spec'])        
+    
     def jsonstr(self): return json.dumps(self.todict(), sort_keys=True, indent=3, separators=(',', ' : '), default=str)  
     def todict(self): return dict(data=self.data, datatype=self.datatype)    
     
@@ -49,6 +48,8 @@ class Spec(ABC):
     def __sub__(self, other): return self.subtract(other)
     def __mul__(self, other): return self.multiply(other)
     def __truediv__(self, other): return self.divide(other)    
+    def __str__(self): return self.jsonstr()
+    def __ne__(self, other): return not self.__eq__(other)
     
     # ABSTRACT INSTANCE METHODS    
     @abstractmethod
@@ -76,9 +77,6 @@ class Spec(ABC):
             Spec.__subclasses[datatype.lower()] = newsubclass
             return newsubclass
         return wrapper  
-
-    # EQUALITY
-    def __ne__(self, other): return not self.__eq__(other)
 
     # OPERATIONS
     def operation(self, other, *args, method, **kwargs):

@@ -76,8 +76,11 @@ def _formatting(function):
 
 @Spec.register('num')
 class NumSpec:  
-    def __hash__(self): return hash(self.jsonstr())
-    def __eq__(self, other): return self.unit == other.unit and self.data == other.data
+    def __hash__(self): return hash((self.data, self.datatype, self.unit,))
+    def __eq__(self, other): 
+        if type(self) != type(other): raise TypeError(type(other))
+        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other))
+        return self.unit == other.unit
         
     @property
     def heading(self): return self.__heading    
