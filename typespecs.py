@@ -22,8 +22,7 @@ ASSIGNMENT = '@'
 _aslist = lambda items: [items] if not isinstance(items, (list, tuple, set)) else list(items)
 
 
-@Spec.register('category')
-class CategorySpec:
+class CategorySpec(Spec, 'category'):
     @property
     def categories(self): return self.__categories
     @property
@@ -82,8 +81,7 @@ class CategorySpec:
         return self.operation(other, *args, method='couple', **kwargs)
 
 
-@Spec.register('histogram')
-class HistogramSpec:
+class HistogramSpec(Spec, 'histogram'):
     @property
     def categories(self): return self.__categories
     @property

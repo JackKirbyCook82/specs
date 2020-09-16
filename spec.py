@@ -27,12 +27,17 @@ class SpecTransformationNotSupportedError(Exception):
     
     
 class Spec(ABC):
+    __registry = {}
+    @classmethod
+    def registry(cls): return cls.__registry
+    def __init_subclass__(cls, datatype, *args, **kwargs):
+        super().__init_subclass__(**kwargs)
+        setattr(cls, 'datatype', datatype.lower())
+
     def __init__(self, *args, data, **kwargs): self.__data = data
     def __new__(cls, *args, **kwargs):
-        if cls == Spec: return cls.getsubclass(kwargs['datatype'].lower())(*args, **kwargs)
-        else:
-            assert hasattr(cls, 'datatype')
-            return super().__new__(cls)
+        if cls == Spec: return cls.__registry[kwargs['datatype'].lower()](*args, **kwargs)
+        else: return super().__new__(cls)
 
     @property
     def data(self): return self.__data
@@ -59,38 +64,21 @@ class Spec(ABC):
     @abstractmethod
     def __eq__(self, other): pass
     @abstractmethod
-    def __hash__(self): pass
-
-    # REGISTER SUBCLASSES  
-    __subclasses = {}      
-    @classmethod
-    def subclasses(cls): return cls.__subclasses
-    @classmethod
-    def getsubclass(cls, datatype): return cls.__subclasses[datatype.lower()]     
-    
-    @classmethod
-    def register(cls, datatype):  
-        def wrapper(subclass):
-            name = subclass.__name__
-            bases = (subclass, cls)
-            newsubclass = type(name, bases, dict(datatype=datatype.lower()))
-            Spec.__subclasses[datatype.lower()] = newsubclass
-            return newsubclass
-        return wrapper  
+    def __hash__(self): pass 
 
     # OPERATIONS
     def operation(self, other, *args, method, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
         attrs['data'] = data_operation(self.data, other.data, *args, method=method, **kwargs)
-        return self.getsubclass(datatype)(**attrs)        
+        return self.registry[datatype](**attrs)        
     
     # TRANSFORMATIONS
     def transformation(self, *args, method, how, **kwargs):
         datatype = kwargs.get('datatype', self.datatype)
         attrs = {key:kwargs.get(key, value) for key, value in self.todict().items()}
         attrs['data'] = data_transformation(self.data, *args, method=method, how=how, **kwargs)
-        return self.getsubclass(datatype)(**attrs)   
+        return self.registry[datatype](**attrs)   
         
     # FILES
     def tojson(self, file):
@@ -106,7 +94,7 @@ class Spec(ABC):
     
     @classmethod
     def fromfile(cls, *args, data, datatype, databasis, **kwargs):
-        return cls.getsubclass(datatype).fromfile(*args, data=data, datatype=datatype, databasis=databasis, **kwargs)
+        return cls.registry()[datatype].fromfile(*args, data=data, datatype=datatype, databasis=databasis, **kwargs)
    
     
     
