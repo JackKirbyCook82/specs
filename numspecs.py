@@ -74,7 +74,7 @@ def _formatting(function):
     return wrapper
 
 
-class NumSpec(Spec, 'num'):  
+class NumSpec(Spec, datatype='num'):  
     def __hash__(self): return hash((self.data, self.datatype, self.unit,))
     def __eq__(self, other): 
         if type(self) != type(other): raise TypeError(type(other))
@@ -179,7 +179,7 @@ class NumSpec(Spec, 'num'):
         return self.transformation(*args, datatype='range', method='unconsolidate', how='cumulate', direction=direction, numdirection='state', **kwargs)
     
    
-class RangeSpec(NumSpec, 'range'):
+class RangeSpec(NumSpec, datatype='range'):
     def direction(self, value):
         lowernum, uppernum = value
         if all([x is None for x in value]): return 'unbounded'

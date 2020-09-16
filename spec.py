@@ -30,9 +30,9 @@ class Spec(ABC):
     __registry = {}
     @classmethod
     def registry(cls): return cls.__registry
-    def __init_subclass__(cls, datatype, *args, **kwargs):
-        super().__init_subclass__(**kwargs)
+    def __init_subclass__(cls, *args, datatype, **kwargs):
         setattr(cls, 'datatype', datatype.lower())
+        cls.__registry[datatype] = cls
 
     def __init__(self, *args, data, **kwargs): self.__data = data
     def __new__(cls, *args, **kwargs):
