@@ -30,8 +30,8 @@ class CategorySpec(Spec, datatype='category'):
     
     def __hash__(self): return hash((self.data, self.datatype, self.categories, self.indexes,))
     def __eq__(self, other): 
-        if type(self) != type(other): raise TypeError(type(other))
-        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other))
+        if type(self) != type(other): raise TypeError(type(other).__name__)
+        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other).__name__)
         return self.categories == other.categories and self.indexes == other.indexes 
     
     def category(self, index): return self.categories[self.indexes.index(index)]

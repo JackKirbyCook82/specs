@@ -77,8 +77,8 @@ def _formatting(function):
 class NumSpec(Spec, datatype='num'):  
     def __hash__(self): return hash((self.data, self.datatype, self.unit,))
     def __eq__(self, other): 
-        if type(self) != type(other): raise TypeError(type(other))
-        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other))
+        if type(self) != type(other): raise TypeError(type(other).__name__)
+        if all([self.data != other.data, self.datatype != other.datatype]): raise TypeError(type(other).__name__)
         return self.unit == other.unit
         
     @property
