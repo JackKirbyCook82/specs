@@ -1,34 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jun 7 2019
-@name:   Spec Objects
+@name:   Specs Module
 @author: Jack Kirby Cook
 
 """
 
-import sys
 import os.path
-import inspect
 import pandas as pd
 
 import utilities.dataframes as dfs
 
 from specs.spec import Spec
-from specs.typespecs import *
-from specs.numspecs import *
-
-
-def import_specs():
-    subclasses = []
-    for name, obj in inspect.getmembers(sys.modules[__name__]):
-        if inspect.isclass(obj): 
-            if issubclass(obj, Spec): subclasses.append(obj)
-    return subclasses
-
+from specs.typespecs import CategorySpec, HistogramSpec
+from specs.numspecs import NumSpec, RangeSpec
 
 __version__ = "1.0.0"
 __author__ = "Jack Kirby Cook"
-__all__ = [str(cls.__name__) for cls in import_specs()]
+__all__ = ['specs_fromfile', 'CategorySpec', 'HistogramSpec', 'NumSpec', 'RangeSpec']
 __copyright__ = "Copyright 2018, Jack Kirby Cook"
 __license__ = ""
 
